@@ -57,6 +57,8 @@ class Interpreter:
         self.add_native_function("typeof", NativeFunction(typeof, en.Type("void"), eval_before=False))
         self.add_native_function("memory_view", NativeFunction(memory_view, en.Type("void")))
         self.add_native_function("memory_ava", NativeFunction(memory_ava, en.Type("void")))
+        self.add_native_function("memory_sp", NativeFunction(memory_sp, en.Type("void")))
+        self.add_native_function("heap_ava", NativeFunction(heap_ava, en.Type("int")))
         self.add_native_function("mem_copy", NativeFunction(mem_copy, en.Type("void")))
         self.add_native_function("clock", NativeFunction(clock, en.Type("int")))
 
@@ -229,7 +231,19 @@ def memory_view():
 
 
 def memory_ava():
-    print(mem.MEMORY.available)
+    mem.MEMORY.available2.print_sorted()
+    # print(mem.MEMORY.available)
+    # mem.MEMORY.available2.print_heap()
+
+
+def memory_sp():
+    print(mem.MEMORY.sp)
+
+
+def heap_ava() -> int:
+    size = len(mem.MEMORY.available2)
+    b = typ.int_to_bytes(size)
+    return mem.MEMORY.allocate(b)
 
 
 def mem_copy(from_ptr, to_ptr, len_ptr):
@@ -883,7 +897,7 @@ def eval_in_decrement(node: ast.InDecrementOperator, env: en.Environment):
 
 
 def eval_null(node: ast.NullStmt, env: en.Environment):
-    return mem.MEMORY.allocate_empty(PTR_LEN)
+    return 1
 
 
 NODE_TABLE = {

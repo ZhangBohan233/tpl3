@@ -1,0 +1,7 @@
+#### Build 1002 ####
+
+1000 struct malloc and free: 750 ms
+
+#### Build 1001 ####
+
+1000 struct malloc and free: 180 ms

@@ -189,6 +189,11 @@ class SubAbstractEnvironment(Environment):
     def is_stopped(self):
         return self.outer.is_stopped()
 
+    def invalidate(self):
+        self.variables = {}
+        self.constants = {}
+        self.var_types = {}
+
 
 class GlobalEnvironment(MainAbstractEnvironment):
     def __init__(self):
@@ -258,8 +263,3 @@ class LoopEnvironment(SubAbstractEnvironment):
 class BlockEnvironment(SubAbstractEnvironment):
     def __init__(self, outer):
         SubAbstractEnvironment.__init__(self, outer)
-
-    def invalidate(self):
-        self.variables = {}
-        self.constants = {}
-        self.var_types = {}

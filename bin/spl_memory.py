@@ -6,15 +6,13 @@ class MemoryException(Exception):
 class Memory:
     def __init__(self):
         self.stack_size = 1024
-        self.literal_size = 1024
-        self.heap_size = 1024
-        self.memory = bytearray(self.stack_size + self.literal_size + self.heap_size)
-        self.available = [i + self.stack_size + self.literal_size for i in range(self.heap_size - 1, -1, -1)]
+        self.literal_size = 0
+        self.vm_size = 4096
+        self.memory = bytearray(self.vm_size)
+        self.available = []
 
         self.sp = 1
-        self.lp = self.stack_size
         self.call_stack_begins = []
-        # self.string_lengths = {}
 
         self.type_sizes = {
             "int": 8,
@@ -24,6 +22,13 @@ class Memory:
             "void": 0
         }
         self.pointer_length = self.type_sizes["int"]
+
+    def load_literal(self, literal_bytes: bytes):
+        length = len(literal_bytes)
+        self.literal_size = length
+        ls = self._literal_starts()
+        self.memory[ls: ls + length] = literal_bytes
+        self._generate_available()
 
     def get_type_size(self, name: str):
         if name[0] == "*":  # is a pointer
@@ -63,17 +68,6 @@ class Memory:
     def mem_copy(self, from_ptr, to_ptr, length):
         b = self.get(from_ptr, length)
         self.set(to_ptr, b)
-
-    def load_literal(self, literal_bytes: bytes):
-        # self.string_lengths = {}
-        # ls = self._literal_starts()
-        # for k in string_lengths:
-        #     self.string_lengths[k + ls] = string_lengths[k]
-        length = len(literal_bytes)
-        if length > self.literal_size:
-            raise MemoryException("Too many literals")
-        ls = self._literal_starts()
-        self.memory[ls: ls + length] = literal_bytes
 
     def get_literal_ptr(self, lit_loc) -> int:
         return self._literal_starts() + lit_loc
@@ -151,7 +145,7 @@ class Memory:
             raise MemoryException("Unreachable memory location {}.".format(ptr, self.sp))
 
     def _total_length(self):
-        return self.stack_size + self.literal_size + self.heap_size
+        return self.vm_size
 
     def _check_in_heap(self, ptr: int):
         if ptr < self._heap_starts() or ptr >= self._heap_ends():
@@ -181,10 +175,16 @@ class Memory:
         return self.stack_size + self.literal_size
 
     def _heap_ends(self):
-        return self.stack_size + self.literal_size + self.heap_size
+        return self.vm_size
 
     def _literal_starts(self):
         return self.stack_size
+
+    def _heap_size(self):
+        return self.vm_size - self.stack_size - self.literal_size
+
+    def _generate_available(self):
+        self.available = [i for i in range(self._heap_ends() - 1, self._heap_starts() - 1, -1)]
 
 
 MEMORY = Memory()

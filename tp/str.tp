@@ -27,8 +27,14 @@ fn main() int {
     var bool: boolean = b[2] == '\0';
     printf("%b", bool);
 
+    free(b);
+    free(c);
+
     printf("%d", str_len(d));
     printf("%s", d);
+
+    memory_view();
+    memory_ava();
 
     return 0;
 }

@@ -27,7 +27,6 @@ OPTIONS:
     -et,             execution               shows the execution times of each node
     -e,   --exit,    exit value              shows the program's exit value
     -l,   --link,    link                    write the linked script to file
-    -ni,  --noimport                         do not automatically import lib.lang.tp
     -t,   --timer,   timer                   enables the timer
     -tk,  --tokens,   tokens                 shows language tokens
     -v,   --vars,    variables               prints out all global variables after execution

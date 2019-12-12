@@ -40,11 +40,12 @@ class Interpreter:
         self.add_natives()
         evaluate(self.ast, self.global_env)
         if "main" in self.global_env.functions:
-            main_func: Function = self.global_env.get_function("main", LINE_FILE)
-            main_rt = main_func.r_tal
-            if main_rt.type_name != "int" or len(main_rt.array_lengths):
-                raise lib.SplException("Function 'main' must return 'int'")
-            r_ptr = call_function(main_func, [], self.global_env)
+            main_group: dict = self.global_env.get_function("main", LINE_FILE)
+            # main_func: Function = main_group[""]
+            # main_rt = main_func.r_tal
+            # if main_rt.type_name != "int" or len(main_rt.array_lengths):
+            #     raise lib.SplException("Function 'main' must return 'int'")
+            r_ptr = call_function(main_group, [], self.global_env)
             rb = mem.MEMORY.get(r_ptr, mem.MEMORY.get_type_size("int"))
             return typ.bytes_to_int(rb)
         return 0
@@ -88,6 +89,10 @@ class Function:
         # self.abstract = abstract
         # self.doc = lib.CharArray(doc)
 
+    def __str__(self):
+        return "Function({}) -> {}".format([en.type_to_readable(par.tal) for par in self.params],
+                                           en.type_to_readable(self.r_tal))
+
 
 class NativeFunction:
     def __init__(self, obj, r_tal: en.Type, eval_before=True):
@@ -99,6 +104,7 @@ class NativeFunction:
         self.func = obj
         self.r_tal = r_tal
         self.eval_before = eval_before
+        self.params = []
 
     def call(self, *args):
         return self.func(*args)
@@ -274,9 +280,10 @@ def eval_block(node: ast.BlockStmt, env: en.Environment):
 
 def eval_name(node: ast.NameNode, env: en.Environment):
     if env.contains_ptr(node.name):
-        return env.get(node.name, (node.line_num, node.file))
+        r = env.get(node.name, (node.line_num, node.file))
     else:
-        return env.get_function(node.name, (node.line_num, node.file))
+        r = env.get_function(node.name, (node.line_num, node.file))
+    return r
 
 
 def eval_def(node: ast.DefStmt, env: en.Environment):
@@ -302,12 +309,15 @@ def eval_def(node: ast.DefStmt, env: en.Environment):
 
 
 def eval_call(node: ast.FuncCall, env: en.Environment):
-    func = evaluate(node.call_obj, env)
+    func_group: dict = evaluate(node.call_obj, env)
+    some_func = list(func_group.values())[0]
 
-    if isinstance(func, Function):
-        return call_function(func, node.args.lines, env)
-    elif isinstance(func, NativeFunction):
-        return call_native_function(func, node.args.lines, env)
+    if isinstance(some_func, Function):
+        return call_function(func_group, node.args.lines, env)
+    elif isinstance(some_func, NativeFunction):
+        return call_native_function(some_func, node.args.lines, env)
+    else:
+        raise lib.TypeException("Call on a non-callable object")
 
 
 def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Environment):
@@ -336,7 +346,15 @@ def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Env
         return rtn_loc
 
 
-def call_function(func: Function, orig_args: list, call_env: en.Environment):
+def call_function(func_group: dict, orig_args: list, call_env: en.Environment):
+    arg_types = []
+    for orig_arg in orig_args:
+        tal = get_tal_of_evaluated_node(orig_arg, call_env)
+        arg_types.append(tal)
+
+    types_id = en.args_type_hash(arg_types)
+    func = func_group[types_id]
+
     rtn_type = func.r_tal
     rtn_len = rtn_type.total_len()
     rtn_loc = mem.MEMORY.allocate_empty(rtn_len)
@@ -464,6 +482,8 @@ def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment):
     if node.left.node_type == ast.NAME_NODE:
         name: str = node.left.name
         if node.level == ast.FUNC_DEFINE:
+            if not isinstance(r, Function):
+                raise lib.TypeException("Unexpected function declaration")
             env.define_function(name, r)
         else:
             tal = get_tal_of_evaluated_node(node.left, env)
@@ -927,4 +947,5 @@ def evaluate(node: ast.Node, env: en.Environment):
     if env.is_terminated():
         return env.returned_ptr()
     fn = NODE_TABLE[node.node_type]
+    # print(fn)
     return fn(node, env)

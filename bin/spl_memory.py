@@ -91,26 +91,6 @@ class Heap:
         lst.reverse()
         print(lst)
 
-    # def print_heap(self):
-    #     import math
-    #     height = math.ceil(math.log2(self.__len__()))
-    #     width = 2 ** height
-    #     index = 0
-    #     lst = []
-    #     for level in range(height):
-    #         exp = 2 ** level
-    #         interval = round(width / exp)
-    #         lst.append((height - level - 1) * height * '  ')
-    #         for _ in range(exp):
-    #             if index == self.__len__():
-    #                 break
-    #             string = '(' + str(self.heap[index]) + ')'
-    #             lst.append(string)
-    #             lst.append((interval + 4 - len(string)) * ' ')
-    #             index += 1
-    #         print(''.join(lst))
-    #         lst.clear()
-
 
 class Memory:
     def __init__(self):

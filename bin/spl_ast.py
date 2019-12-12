@@ -16,6 +16,7 @@ MULTIPLIER = 1000
 LITERAL = 2
 STRING_LITERAL = 3
 NAME_NODE = 4
+POINTER_NAME_NODE = 5
 BREAK_STMT = 7
 CONTINUE_STMT = 8
 ASSIGNMENT_NODE = 9
@@ -269,6 +270,22 @@ class ReturnStmt(UnaryExpr):
         UnaryExpr.__init__(self, line, "return")
 
         self.node_type = RETURN_STMT
+
+
+class PointerNameNode(LeafNode):
+
+    def __init__(self, line, rel_ptr, layer):
+        LeafNode.__init__(self, line)
+
+        self.node_type = POINTER_NAME_NODE
+        self.rel_ptr = rel_ptr
+        self.layer = layer
+
+    def __str__(self):
+        return "PN(#{}, {})".format(self.rel_ptr, self.layer)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class NameNode(LeafNode):

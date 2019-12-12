@@ -5,6 +5,7 @@ import script
 import time
 import os
 from bin import spl_lexer, spl_parser as psr, spl_interpreter
+import bin.tpl_pre_processor as tpp
 
 sys.setrecursionlimit(10000)
 
@@ -120,6 +121,9 @@ def interpret(mode: str):
 
     parser = psr.Parser(lexer.get_tokens())
     block = parser.parse()
+
+    # pre = tpp.PreProcessor()
+    # pre.process(block)
 
     if argv["ast"]:
         print("===== Abstract Syntax Tree =====")

@@ -52,6 +52,16 @@ def is_array(t: Type) -> bool:
     return len(t.array_lengths) > 0
 
 
+def args_type_hash(args: list):
+    s = ",".join([type_to_readable(tal) for tal in args])
+    return s
+
+
+def params_type_hash(params: list):
+    s = ",".join([type_to_readable(par.tal) for par in params])
+    return s
+
+
 UNDEFINED = Undefined()
 
 
@@ -106,7 +116,14 @@ class Environment:
                                     .format(name, lf[1], lf[0]))
 
     def define_function(self, name: str, func):
-        self.functions[name] = func
+        # print(func)
+        types = params_type_hash(func.params)
+        if name in self.functions:
+            self.functions[name][types] = func
+        else:
+            d = {types: func}
+            self.functions[name] = d
+        # print(self.functions[name])
 
     def get_function(self, name: str, lf):
         if name in self.functions:

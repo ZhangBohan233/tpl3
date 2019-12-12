@@ -1,6 +1,6 @@
 import sys
 import bin.spl_ast as ast
-import bin.spl_compiler2 as cmp
+import bin.tpl_compiler as cmp
 import bin.spl_parser as psr
 import bin.spl_lexer as lex
 import script
@@ -21,9 +21,11 @@ if __name__ == '__main__':
         parser = psr.Parser(tokens)
         root = parser.parse()
 
-        compiler = cmp.Compiler(root)
-        compiler.compile()
-        byt = compiler.get_bytes()
+        print(root)
+        print("========== End of AST ==========")
+
+        compiler = cmp.Compiler(parser.literal_bytes)
+        byt = compiler.compile_all(root)
 
         with open(target_file, "wb") as wf:
             wf.write(byt)

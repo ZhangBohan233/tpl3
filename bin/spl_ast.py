@@ -448,25 +448,27 @@ class ForLoopStmt(CondStmt):
 class DefStmt(TitleNode):
     params: BlockStmt = None
     body = None
-    abstract: bool = False
-    annotations: list
-    doc: str
+    name: str
+    # abstract: bool = False
+    # annotations: list
+    # doc: str
     r_type: Node
 
-    def __init__(self, line, abstract: bool, func_doc: str):
+    def __init__(self, line, name):
         TitleNode.__init__(self, line)
 
         self.node_type = DEF_STMT
         self.params = None
-        self.abstract = abstract
-        self.doc = func_doc
-        self.annotations = []
+        self.name = name
+        # self.abstract = abstract
+        # self.doc = func_doc
+        # self.annotations = []
 
     def __str__(self):
-        return "func(({}) -> {} {})".format(self.params, self.r_type, self.body)
+        return "fn {}(({}) -> {} {})".format(self.name, self.params, self.r_type, self.body)
 
     def __repr__(self):
-        return ("abstract " if self.abstract else "") + "function"
+        return "function"
 
 
 class StructNode(Node):
@@ -899,11 +901,11 @@ class AbstractSyntaxTree:
     #     else:
     #         pass
 
-    def add_function(self, line, abstract: bool, func_doc: str):
+    def add_function(self, line, name: str):
         if self.inner:
-            self.inner.add_function(line, abstract, func_doc)
+            self.inner.add_function(line, name)
         else:
-            func = DefStmt(line, abstract, func_doc)
+            func = DefStmt(line, name)
             self.stack.append(func)
             self.inner = AbstractSyntaxTree()
 
@@ -1125,8 +1127,8 @@ class AbstractSyntaxTree:
                 block_node = self.stack[-1]
                 if isinstance(prob_func_node, DefStmt):
                     if isinstance(block_node, BlockStmt):
-                        if prob_func_node.abstract:
-                            raise stl.ParseException("Abstract function cannot have body")
+                        # if prob_func_node.abstract:
+                        #     raise stl.ParseException("Abstract function cannot have body")
                         prob_func_node.body = block_node
                         self.stack.pop()
 

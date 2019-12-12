@@ -23,8 +23,35 @@ PRIMITIVE_TYPES = {
     "char": CHAR_LEN
 }
 
+ASSIGN = 3  # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
+ADD_I = 10  # ADD_I    RESULT_P  LEFT_P   RIGHT_P   | add the ints pointed by pointers, store the result to RESULT_P
 
-class Interpreter:
+
+class ByteOutput:
+    def __init__(self):
+        self.out = bytearray()
+
+    def assign(self, tar: int, src: int, length: int):
+        # print(tar, src, length)
+        self.out.append(ASSIGN)
+        self.write_int(tar)
+        self.write_int(src)
+        self.write_int(length)
+
+    def add_binary_op_int(self, op: int, res: int, left: int, right: int):
+        self.out.append(op)
+        self.write_int(res)
+        self.write_int(left)
+        self.write_int(right)
+
+    def write_int(self, i):
+        self.out.extend(typ.int_to_bytes(i))
+
+    def to_bytes(self):
+        return bytes(self.out)
+
+
+class Compiler:
     def __init__(self):
         self.ast = None
         self.literal_bytes = None
@@ -35,19 +62,24 @@ class Interpreter:
         self.ast = tree
         self.literal_bytes = literal_bytes
 
-    def interpret(self):
-        mem.MEMORY.load_literal(self.literal_bytes)
+    def compile(self) -> bytes:
+
+        byte_out = ByteOutput()
+        byte_out.write_int(len(self.literal_bytes))
+        byte_out.out.extend(self.literal_bytes)
+
+        mem.MEMORY.initialize(self.literal_bytes)
         self.add_natives()
-        evaluate(self.ast, self.global_env)
+        evaluate(self.ast, self.global_env, byte_out)
         if "main" in self.global_env.functions:
             main_func: Function = self.global_env.get_function("main", LINE_FILE)
             main_rt = main_func.r_tal
             if main_rt.type_name != "int" or len(main_rt.array_lengths):
                 raise lib.SplException("Function 'main' must return 'int'")
             r_ptr = call_function(main_func, [], self.global_env)
-            rb = mem.MEMORY.get(r_ptr, mem.MEMORY.get_type_size("int"))
-            return typ.bytes_to_int(rb)
-        return 0
+            # print(r_ptr)
+            # rb = mem.MEMORY.get(r_ptr, mem.MEMORY.get_type_size("int"))
+        return byte_out.to_bytes()
 
     def add_natives(self):
         self.add_native_function("printf", NativeFunction(printf, en.Type("void"), eval_before=False))
@@ -279,7 +311,7 @@ def eval_name(node: ast.NameNode, env: en.Environment):
         return env.get_function(node.name, (node.line_num, node.file))
 
 
-def eval_def(node: ast.DefStmt, env: en.Environment):
+def eval_def(node: ast.DefStmt, env: en.Environment, byte_out: ByteOutput):
     block: ast.BlockStmt = node.params
     params_lst = []
     for p in block.lines:
@@ -310,7 +342,7 @@ def eval_call(node: ast.FuncCall, env: en.Environment):
         return call_native_function(func, node.args.lines, env)
 
 
-def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Environment):
+def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Environment, byte_out: ByteOutput):
     rtn_type = func.r_tal
     rtn_len = rtn_type.total_len()
     rtn_loc = mem.MEMORY.allocate_empty(rtn_len)
@@ -322,7 +354,7 @@ def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Env
         for i in range(len(orig_args)):
             orig_arg = orig_args[i]
             # print(orig_arg)
-            value = evaluate(orig_arg, call_env)
+            value = evaluate(orig_arg, call_env, byte_out)
             args.append(value)
 
         rtn_ptr = func.call(*args)
@@ -336,7 +368,7 @@ def call_native_function(func: NativeFunction, orig_args: list, call_env: en.Env
         return rtn_loc
 
 
-def call_function(func: Function, orig_args: list, call_env: en.Environment):
+def call_function(func: Function, orig_args: list, call_env: en.Environment, byte_out: ByteOutput):
     rtn_type = func.r_tal
     rtn_len = rtn_type.total_len()
     rtn_loc = mem.MEMORY.allocate_empty(rtn_len)
@@ -347,19 +379,21 @@ def call_function(func: Function, orig_args: list, call_env: en.Environment):
     for i in range(len(orig_args)):
         param: ParameterPair = func.params[i]
         orig_arg = orig_args[i]
-        p = evaluate(orig_arg, call_env)
+        p = evaluate(orig_arg, call_env, byte_out)
         tal = param.tal
         total_len = tal.total_len()
         arg_ptr = mem.MEMORY.allocate_empty(total_len)
         scope.define_var(param.name, tal, arg_ptr)
-        mem.MEMORY.mem_copy(p, arg_ptr, total_len)
+        # mem.MEMORY.mem_copy(p, arg_ptr, total_len)
+        byte_out.assign(arg_ptr, p, total_len)
 
-    r = evaluate(func.body, scope)
+    r = evaluate(func.body, scope, byte_out)
 
     if rtn_len > 0 and r is None:
         raise lib.TypeException("Missing return statement of a function declared to return type '{}'"
                                 .format(en.type_to_readable(rtn_type)))
-    mem.MEMORY.mem_copy(r, rtn_loc, rtn_len)
+    # mem.MEMORY.mem_copy(r, rtn_loc, rtn_len)
+    byte_out.assign(rtn_loc, r, rtn_len)
 
     mem.MEMORY.restore_stack()
     return rtn_loc
@@ -457,8 +491,8 @@ def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
         return en.Type("*void")
 
 
-def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment):
-    r = evaluate(node.right, env)
+def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment, byte_out):
+    r = evaluate(node.right, env, byte_out)
     lf = node.line_num, node.file
 
     if node.left.node_type == ast.NAME_NODE:
@@ -468,10 +502,10 @@ def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment):
         else:
             tal = get_tal_of_evaluated_node(node.left, env)
             total_len = tal.total_len()
-            rv = mem.MEMORY.get(r, total_len)
+            # rv = mem.MEMORY.get(r, total_len)
             current_ptr = env.get(name, lf)
-            mem.MEMORY.set(current_ptr, rv)
-            # env.assign(name, r, lf)
+            # mem.MEMORY.set(current_ptr, rv)
+            byte_out.assign(current_ptr, r, total_len)
     elif node.left.node_type == ast.TYPE_NODE:
         type_node: ast.TypeNode = node.left
         tal = get_tal_of_defining_node(type_node.right, env)
@@ -483,15 +517,16 @@ def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment):
 
         ptr = mem.MEMORY.allocate_empty(total_len)
         if r != 0:  # is not undefined
-            mem.MEMORY.mem_copy(r, ptr, total_len)
+            # mem.MEMORY.mem_copy(r, ptr, total_len)
+            byte_out.assign(ptr, r, total_len)
 
         if node.level == ast.VAR:
             env.define_var(name, tal, ptr)
         elif node.level == ast.CONST:
             env.define_const(name, tal, ptr)
-    elif node.left.node_type == ast.DOT:
+    elif node.left.node_type == ast.DOT:  # TODO
         dot: ast.Dot = node.left
-        l_ptr = evaluate(dot.left, env)
+        l_ptr = evaluate(dot.left, env, byte_out)
         l_tal = get_tal_of_evaluated_node(dot.left, env)
         # print(l_tal)
         struct: Struct = env.get_struct(l_tal.type_name)
@@ -507,7 +542,7 @@ def eval_assignment_node(node: ast.AssignmentNode, env: en.Environment):
         uo: ast.UnaryOperator = node.left
         tal = get_tal_of_evaluated_node(uo, env)
         total_len = tal.total_len()
-        l_ptr = evaluate(uo, env)
+        l_ptr = evaluate(uo, env, byte_out)
         rv = mem.MEMORY.get(r, total_len)
         if uo.operation == "pack" and uo.value.node_type == ast.NAME_NODE:
             ri = typ.bytes_to_int(rv)
@@ -632,11 +667,13 @@ def basic_arithmetic(op_set: dict, left_ptr: int, left_tal: en.Type, right_ptr: 
 
 def int_op_any(lv: bytes, right_ptr: int, right_tal: en.Type, op_set: dict) -> int:
     if right_tal.type_name in op_set:
-        rv = mem.MEMORY.get(right_ptr, right_tal.total_len())
-        op_func = op_set[right_tal.type_name]
-        res = op_func(lv, rv)
-        return mem.MEMORY.allocate(res)
-    elif right_tal.type_name[0] == "*":
+        # TODO: CAST TO INT
+        pass
+        # rv = mem.MEMORY.get(right_ptr, right_tal.total_len())
+        # op_func = op_set[right_tal.type_name]
+        # res = op_func(lv, rv)
+        # return mem.MEMORY.allocate(res)
+    elif right_tal.type_name[0] == "*":  # TODO
         rv = mem.MEMORY.get(right_ptr, PTR_LEN)
         op_func = op_set["int"]
         res = op_func(lv, rv)
@@ -723,9 +760,16 @@ def eval_binary_operation(node: ast.BinaryOperator, env: en.Environment):
         rtl = get_tal_of_evaluated_node(node.right, env)
 
         # print(left, right)
+        if ltl.type_name == "int":
+            if rtl.type_name == "int":
+                res = mem.MEMORY.allocate_empty(INT_LEN)
+                BYTE_OUTPUT.add_binary_op_int(ADD_I, res, left, right)
+            else:
+                pass  # TODO: cast to int
 
-        op_type = BINARY_OP_TABLE[node.operation]
-        return basic_arithmetic(op_type, left, ltl, right, rtl, env)
+        # op_type = BINARY_OP_TABLE[node.operation]
+        # return basic_arithmetic(op_type, left, ltl, right, rtl, env)
+        return res
     elif node.operation in COMPARE_TABLE:
         left = evaluate(node.left, env)
         right = evaluate(node.right, env)
@@ -923,8 +967,8 @@ NODE_TABLE = {
 }
 
 
-def evaluate(node: ast.Node, env: en.Environment):
+def evaluate(node: ast.Node, env: en.Environment, byte_out: ByteOutput):
     if env.is_terminated():
         return env.returned_ptr()
     fn = NODE_TABLE[node.node_type]
-    return fn(node, env)
+    return fn(node, env, byte_out)

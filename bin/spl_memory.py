@@ -114,10 +114,14 @@ class Heap:
 
 class Memory:
     def __init__(self):
-        self.stack_size = 1024
-        self.literal_size = 0
         self.vm_size = 32768
         self.memory = bytearray(self.vm_size)
+
+        self.stack_start = 9
+        self.literal_start = 1024
+        self.global_start = 1024
+        self.heap_start = 1024
+
         # self.available = []
         self.available2 = Heap()
 
@@ -133,13 +137,14 @@ class Memory:
         self.pointer_length = self.type_sizes["int"]
 
         self.sp = 1 + self.pointer_length
+        self.gp = 0
 
-    def load_literal(self, literal_bytes: bytes):
+    def initialize(self, literal_bytes: bytes):
         length = len(literal_bytes)
-        self.literal_size = length
-        ls = self._literal_starts()
-        self.memory[ls: ls + length] = literal_bytes
-        self._generate_available()
+        self.global_start += length
+        self.memory[self.literal_start: self.global_start] = literal_bytes
+        self.gp = self.global_start
+        # self._generate_available()
 
     def get_type_size(self, name: str):
         if name[0] == "*":  # is a pointer
@@ -156,10 +161,14 @@ class Memory:
         return ptr
 
     def allocate_empty(self, length: int) -> int:
-        ptr = self.sp
-        self.sp += length
-        if self.sp >= self.stack_size:
-            raise MemoryException("Stack overflow")
+        if len(self.call_stack_begins) == 0:
+            ptr = self.gp
+            self.gp += length
+        else:
+            ptr = self.sp
+            self.sp += length
+            if self.sp >= self.literal_start:
+                raise MemoryException("Stack overflow")
         return ptr
 
     def push_stack(self):
@@ -167,6 +176,9 @@ class Memory:
 
     def restore_stack(self):
         self.sp = self.call_stack_begins.pop()
+
+    def get_last_call(self):
+        return self.call_stack_begins[-1]
 
     def set(self, ptr: int, b: bytes):
         self._check_range(ptr)
@@ -181,7 +193,7 @@ class Memory:
         self.set(to_ptr, b)
 
     def get_literal_ptr(self, lit_loc) -> int:
-        return self._literal_starts() + lit_loc
+        return self.literal_start + lit_loc
 
     def get_char_array(self, ptr) -> bytes:
         end = ptr
@@ -216,20 +228,21 @@ class Memory:
         length = allocated_len + reserved_len
         for i in range(length):
             ava = begin
-            self._check_in_heap(ava)
+            # self._check_in_heap(ava)
             self.available2.insert(ava)
             # self.available.append(ava)
 
     def print_memory(self):
         print("stack pointer: {}, heap available: {}".format(self.sp, len(self.available2)))
-        print(self.memory[:self.stack_size])
-        print(self.memory[self.stack_size:self.stack_size + self.literal_size])
-        print(self.memory[self.stack_size + self.literal_size:])
+        print(self.memory[:self.literal_start])
+        print(self.memory[self.literal_start:self.global_start])
+        print(self.memory[self.global_start:self.heap_start])
+        print(self.memory[self.heap_start:])
 
     def _check_range(self, ptr: int):
         if ptr == 0:
             raise MemoryException("Trying to access null pointer")
-        if self.sp <= ptr < self.stack_size:
+        if self.sp <= ptr < self.literal_start:
             raise MemoryException("Unreachable stack location {}. Current tp: {}".format(ptr, self.sp))
         if ptr < 0 or ptr >= self._total_length():
             raise MemoryException("Unreachable memory location {}.".format(ptr, self.sp))
@@ -237,9 +250,9 @@ class Memory:
     def _total_length(self):
         return self.vm_size
 
-    def _check_in_heap(self, ptr: int):
-        if ptr < self._heap_starts() or ptr >= self._heap_ends():
-            raise MemoryException("Pointer to {} is not in heap".format(ptr))
+    # def _check_in_heap(self, ptr: int):
+    #     if ptr < self._heap_starts() or ptr >= self._heap_ends():
+    #         raise MemoryException("Pointer to {} is not in heap".format(ptr))
 
     def _find_available2(self, length):
         pool = []
@@ -286,21 +299,21 @@ class Memory:
     #             i -= j + 1
     #     raise MemoryException("No space to malloc an object of length {}".format(length - self.get_type_size("int")))
 
-    def _heap_starts(self):
-        return self.stack_size + self.literal_size
+    # def _heap_starts(self):
+    #     return self.stack_size + self.literal_size
+    #
+    # def _heap_ends(self):
+    #     return self.vm_size
+    #
+    # def _literal_starts(self):
+    #     return self.stack_size
+    #
+    # def _heap_size(self):
+    #     return self.vm_size - self.stack_size - self.literal_size
 
-    def _heap_ends(self):
-        return self.vm_size
-
-    def _literal_starts(self):
-        return self.stack_size
-
-    def _heap_size(self):
-        return self.vm_size - self.stack_size - self.literal_size
-
-    def _generate_available(self):
-        # self.available = [i for i in range(self._heap_ends() - 1, self._heap_starts() - 1, -1)]
-        self.available2.build_heap([i + self._heap_starts() for i in range(self._heap_size())])
+    # def _generate_available(self):
+    #     # self.available = [i for i in range(self._heap_ends() - 1, self._heap_starts() - 1, -1)]
+    #     self.available2.build_heap([i + self._heap_starts() for i in range(self._heap_size())])
 
 
 MEMORY = Memory()
@@ -317,7 +330,7 @@ def bytes_to_int(b: bytes) -> int:
 
 if __name__ == "__main__":
     m = Memory()
-    m.load_literal(bytes(0))
+    m.initialize(bytes(0))
     m.available2.heap = [32767, 32766, 32765, 32764, 32763, 32762, 32761, 32760, 32759]
     m.available2.print_sorted()
     ava2 = m._find_available2(4)

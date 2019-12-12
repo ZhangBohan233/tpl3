@@ -178,25 +178,25 @@ class Parser:
                     elif sym == "~":  # a special mark
                         pass
                     elif sym == "fn":
-                        func_doc = self.get_doc(i)
+                        # func_doc = self.get_doc(i)
                         i += 1
                         f_token: stl.IdToken = self.tokens[i]
                         f_name = f_token.symbol
                         push_back = 1
-                        if f_name == "(":
-                            func_count += 1
-                            push_back = 0
-                        elif f_name.isidentifier():
-                            parser.add_name(line, f_name)
-                            parser.add_assignment(line, ast.FUNC_DEFINE)
-                        else:
-                            raise stl.ParseException("Illegal function name '{}', in file '{}', at line {}"
-                                                     .format(f_name, line[1], line[0]))
-                        parser.add_function(line, is_abstract, func_doc)
+                        # if f_name == "(":
+                        #     func_count += 1
+                        #     push_back = 0
+                        # elif f_name.isidentifier():
+                        #     parser.add_name(line, f_name)
+                        #     parser.add_assignment(line, ast.FUNC_DEFINE)
+                        # else:
+                        #     raise stl.ParseException("Illegal function name '{}', in file '{}', at line {}"
+                        #                              .format(f_name, line[1], line[0]))
+                        parser.add_function(line, f_name)
                         i += push_back
                         param_nest_list.append(par_count)
                         par_count += 1
-                        is_abstract = False
+                        # is_abstract = False
                     elif sym == "struct":
                         i += 1
                         name_token: stl.IdToken = self.tokens[i]

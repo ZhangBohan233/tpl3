@@ -24,11 +24,11 @@ class Type:
     def __str__(self):
         return "({}, {})".format(self.type_name, self.array_lengths)
 
-    def total_len(self):
+    def total_len(self, mm):
         arr_len = 1
         for x in self.array_lengths:
             arr_len *= x
-        return mem.MEMORY.get_type_size(self.type_name) * arr_len
+        return mm.get_type_size(self.type_name) * arr_len
 
 
 def type_total_len(t: Type) -> int:
@@ -62,9 +62,7 @@ class Environment:
 
         self.variables: dict[str: int] = {}
         self.constants = {}
-        self.var_types: dict[str: (str, int)] = {}  # name: (type name, arr len)
-
-        self.functions: dict = {}
+        self.var_types: dict[str: Type] = {}  # name: (type name, arr len)
 
     def invalidate(self):
         raise EnvironmentException("Cannot invalidate a main environment")
@@ -105,16 +103,12 @@ class Environment:
             raise VariableException("Variable or constant '{}' is not defined, in file '{}', at line {}"
                                     .format(name, lf[1], lf[0]))
 
-    def define_function(self, name: str, func):
-        self.functions[name] = func
+    def define_function(self, name: str, r_type: Type, func_ptr: int):
+        raise EnvironmentException("Function must be declared in global scope")
+        # self.functions[name] = func
 
     def get_function(self, name: str, lf):
-        if name in self.functions:
-            return self.functions[name]
-        elif not self.is_global():
-            return self.outer.get_function(name, lf)
-        raise VariableException("Variable or constant '{}' is not defined, in file '{}', at line {}"
-                                .format(name, lf[1], lf[0]))
+        raise EnvironmentException("Function must be declared in global scope")
 
     def get(self, name: str, lf):
         if name in self.constants:
@@ -200,6 +194,16 @@ class GlobalEnvironment(MainAbstractEnvironment):
         MainAbstractEnvironment.__init__(self, None)
 
         self.structs = {}
+        self.functions: dict = {}
+
+    def define_function(self, name: str, r_type, func):
+        self.functions[name] = func
+
+    def get_function(self, name: str, lf):
+        if name in self.functions:
+            return self.functions[name]
+        else:
+            raise EnvironmentException("Function '{}' not defined".format(name))
 
     def is_global(self):
         return True

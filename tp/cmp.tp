@@ -1,0 +1,8 @@
+
+fn test(x: int) int {
+    return x;
+}
+
+fn main() int {
+    return test(3);
+}

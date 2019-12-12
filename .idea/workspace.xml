@@ -1,20 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="aae2efb2-7778-4cc3-ae20-bcb51cee43a1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/doc/performance.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tp/mem2.tp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tp/perf.tp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/tpl_compiler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/tpl_vm.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/doc/plan.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tp.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tpc.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_ast.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_ast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_compiler.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_compiler2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/spl_environment.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_environment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/spl_interpreter.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_interpreter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_interpreter.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/tpl_compiler2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/spl_memory.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_memory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/doc/changelog.txt" beforeDir="false" afterPath="$PROJECT_DIR$/doc/changelog.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/compiler.py" beforeDir="false" afterPath="$PROJECT_DIR$/compiler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tp/cmp.sp" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tp/cmp.spc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tp/cmp.tpc" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tpc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
   </component>
   <component name="DatabaseView">
     <option name="SHOW_INTERMEDIATE" value="true" />
@@ -47,41 +66,21 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../tpl3c" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\GitHub\tpl3\bin" />
       <recent name="E:\GitHub\spl3" />
       <recent name="E:\GitHub\spl3\bin" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.tpl">
-    <configuration name="compiler" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="tpl3" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/compiler.py" />
-      <option name="PARAMETERS" value="sp/cmp.sp sp/cmp.spc" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.tpc">
     <configuration name="spl_memory" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="tpl3" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -96,28 +95,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/bin/spl_memory.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="spl_types" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="tpl3" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/bin/spl_types.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -148,6 +125,50 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="tp" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="tpl3" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tp.py" />
+      <option name="PARAMETERS" value="tp/cmp.tpc" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="tpc" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="tpl3" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tpc.py" />
+      <option name="PARAMETERS" value="tp/cmp.tp tp/cmp.tpc" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="tpl" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="tpl3" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -162,7 +183,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tpl.py" />
-      <option name="PARAMETERS" value="-e tp/perf.tp" />
+      <option name="PARAMETERS" value="tpc tp/cmp.tp tp/cmp.tpc" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -173,17 +194,17 @@
     <list>
       <item itemvalue="Python.tpl" />
       <item itemvalue="Python.spl_memory" />
-      <item itemvalue="Python.spl_types" />
-      <item itemvalue="Python.compiler" />
       <item itemvalue="Python.test1" />
+      <item itemvalue="Python.tpc" />
+      <item itemvalue="Python.tp" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.tpc" />
+        <item itemvalue="Python.tp" />
         <item itemvalue="Python.tpl" />
         <item itemvalue="Python.spl_memory" />
         <item itemvalue="Python.test1" />
-        <item itemvalue="Python.compiler" />
-        <item itemvalue="Python.spl_types" />
       </list>
     </recent_temporary>
   </component>
@@ -230,7 +251,10 @@
       <workItem from="1575579965793" duration="23274000" />
       <workItem from="1575624531382" duration="256000" />
       <workItem from="1575625940401" duration="1502000" />
-      <workItem from="1575664687980" duration="7215000" />
+      <workItem from="1575664687980" duration="7288000" />
+      <workItem from="1575923053440" duration="7934000" />
+      <workItem from="1575950511926" duration="19000" />
+      <workItem from="1576102998340" duration="18252000" />
     </task>
     <servers />
   </component>
@@ -238,35 +262,49 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1575671545270">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1575928590238">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1575671545270" />
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1575671903448">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1575928590238" />
+    <state x="510" y="215" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1575925705625">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1575671903448" />
-    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1575671903448">
+    <state x="510" y="215" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.824@0.0.1536.824" timestamp="1575925705625" />
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1575950529941">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1575671903448" />
-    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1575671903447">
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1575950529941" />
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1576123972586">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1575671903447" />
-    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1575671903448">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1576123972586" />
+    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1576123972586">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1575671903448" />
+    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1576123972586" />
+    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1576123972586">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1576123972586" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1576123972586">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1576123972586" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1575928474552">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1575928474552" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/tpl3$spl.coverage" NAME="tpl Coverage Results" MODIFIED="1575626969342" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$spl_memory.coverage" NAME="spl_memory Coverage Results" MODIFIED="1574152361604" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
-    <SUITE FILE_PATH="coverage/tpl3$tpl.coverage" NAME="tpl Coverage Results" MODIFIED="1575671903428" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tpl.coverage" NAME="tpl Coverage Results" MODIFIED="1575929881029" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tp.coverage" NAME="tp Coverage Results" MODIFIED="1575954745802" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$compiler.coverage" NAME="compiler Coverage Results" MODIFIED="1575438441013" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$spl_types.coverage" NAME="spl_types Coverage Results" MODIFIED="1575374052360" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
     <SUITE FILE_PATH="coverage/tpl3$spl_memory.coverage" NAME="spl_memory Coverage Results" MODIFIED="1575671110224" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
     <SUITE FILE_PATH="coverage/spl3$test1.coverage" NAME="test1 Coverage Results" MODIFIED="1575538279899" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/sp" />
     <SUITE FILE_PATH="coverage/spl3$spl.coverage" NAME="spl Coverage Results" MODIFIED="1575608824667" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tpc.coverage" NAME="tpc Coverage Results" MODIFIED="1576123193175" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

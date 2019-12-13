@@ -1,8 +1,9 @@
 
-fn test(x: int) int {
-    return x;
+fn test() int {
+    return 3;
 }
 
 fn main() int {
-    return test(3);
+    var a: int = test();
+    return a;
 }

@@ -103,12 +103,12 @@ class Environment:
             raise VariableException("Variable or constant '{}' is not defined, in file '{}', at line {}"
                                     .format(name, lf[1], lf[0]))
 
-    def define_function(self, name: str, r_type: Type, func_ptr: int):
+    def define_function(self, name: str, r_type: Type, func):
         raise EnvironmentException("Function must be declared in global scope")
         # self.functions[name] = func
 
     def get_function(self, name: str, lf):
-        raise EnvironmentException("Function must be declared in global scope")
+        return self.outer.get_function(name, lf)
 
     def get(self, name: str, lf):
         if name in self.constants:

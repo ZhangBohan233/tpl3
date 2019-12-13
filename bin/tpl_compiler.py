@@ -13,6 +13,7 @@ VOID_LEN = 0
 
 ASSIGN = 3  # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
 CALL = 4    # CALL     FN PTR
+RETURN = 5  # RETURN   VALUE_PTR
 ADD_I = 10  # ADD_I    RESULT_P  LEFT_P   RIGHT_P   | add the ints pointed by pointers, store the result to RESULT_P
 
 
@@ -27,7 +28,7 @@ class ByteOutput:
         return bytes(self.codes)
 
     def assign(self, tar: int, src: int, length: int):
-        # print(tar, src, length)
+        print("assign", tar, src, length)
         self.codes.append(ASSIGN)
         self.write_int(tar)
         self.write_int(src)
@@ -42,6 +43,10 @@ class ByteOutput:
     def add_call(self, ftn_ptr):
         self.codes.append(CALL)
         self.write_int(ftn_ptr)
+
+    def add_return(self, value_ptr):
+        self.codes.append(RETURN)
+        self.write_int(value_ptr)
 
     def write_int(self, i):
         self.codes.extend(typ.int_to_bytes(i))
@@ -103,6 +108,7 @@ class MemoryManager:
         return self.blocks[-1]
 
     def define_func(self, fn_bytes: bytes):
+        # print(fn_bytes)
         self.global_bytes.extend(fn_bytes)
         self.gp += len(fn_bytes)
 
@@ -120,11 +126,11 @@ class ParameterPair:
 
 
 class Function:
-    def __init__(self, params, outer, r_tal, ptr):
+    def __init__(self, params, r_tal: en.Type, ptr: int):
         self.params: [ParameterPair] = params
         # self.annotations = annotations
         # self.body = body
-        self.outer_scope = outer
+        # self.outer_scope = outer
         self.r_tal: en.Type = r_tal
         self.ptr = ptr
 
@@ -132,6 +138,7 @@ class Function:
 class Compiler:
     def __init__(self, literal_bytes: bytes):
         self.memory = MemoryManager(literal_bytes)
+        self.literal_bytes = literal_bytes
 
         self.node_table = {
             ast.LITERAL: self.compile_literal,
@@ -147,6 +154,10 @@ class Compiler:
     def compile_all(self, root: ast.Node) -> bytes:
         bo = ByteOutput()
 
+        # lit_len = len(self.literal_bytes)
+        # bo.write_int(lit_len)
+        # bo.codes.extend(self.literal_bytes)
+
         env = en.GlobalEnvironment()
         self.compile(root, env, bo)
 
@@ -154,9 +165,14 @@ class Compiler:
             main_ptr = env.functions["main"]
             self.function_call(main_ptr, [], env, bo)
 
-        print(env.functions)
+        lit_and_global = ByteOutput()
+        lit_and_global.write_int(len(self.literal_bytes))
+        lit_and_global.write_int(len(self.memory.global_bytes))
+        lit_and_global.codes.extend(self.literal_bytes)
+        lit_and_global.codes.extend(self.memory.global_bytes)
+        lit_and_global.codes.extend(bo.codes)
         print(self.memory.global_bytes)
-        return bytes(bo)
+        return bytes(lit_and_global)
 
     def compile(self, node: ast.Node, env: en.Environment, bo: ByteOutput):
         nt = node.node_type
@@ -180,6 +196,8 @@ class Compiler:
         st = inner_bo.reserve_space(INT_LEN)
         scope = en.FunctionEnvironment(env)
         self.memory.push_stack()
+
+        param_pairs = []
         for param in node.params.lines:
             tn: ast.TypeNode = param
             name_node: ast.NameNode = tn.left
@@ -187,6 +205,9 @@ class Compiler:
             total_len = tal.total_len(self.memory)
             ptr = self.memory.allocate(total_len)
             scope.define_var(name_node.name, tal, ptr)
+
+            param_pair = ParameterPair(name_node.name, tal)
+            param_pairs.append(param_pair)
 
         self.compile(node.body, scope, inner_bo)
         func_len = len(inner_bo) - st - INT_LEN
@@ -196,12 +217,17 @@ class Compiler:
         self.memory.restore_stack()
         self.memory.define_func(bytes(inner_bo))
 
-        ftn = Function()
+        # print(scope.variables)
+        ftn = Function(param_pairs, r_tal, ftn_ptr)
+        env.define_function(node.name, r_tal, ftn)
 
+        # print(inner_bo.codes)
         # bo.add_function(bytes(inner_bo))
 
     def compile_name_node(self, node: ast.NameNode, env: en.Environment, bo: ByteOutput):
-        pass
+        lf = node.line_num, node.file
+        ptr = env.get(node.name, lf)
+        return ptr
 
     def compile_assignment_node(self, node: ast.AssignmentNode, env: en.Environment, bo: ByteOutput):
         r = self.compile(node.right, env, bo)
@@ -231,9 +257,9 @@ class Compiler:
         lf = node.line_num, node.file
 
         # TODO: check is native function
-        ftn_ptr = env.get_function(node.call_obj.name, lf)
+        ftn: Function = env.get_function(node.call_obj.name, lf)
 
-        args = []
+        args = []  # arg_ptr
         for arg_node in node.args.lines:
             tal = get_tal_of_evaluated_node(arg_node, env)
             total_len = tal.total_len(self.memory)
@@ -242,20 +268,26 @@ class Compiler:
             tup = arg_ptr, total_len
             args.append(tup)
 
-        return self.function_call(ftn_ptr, args, env, bo)
+        return self.function_call(ftn, args, env, bo)
 
-    def function_call(self, func_ptr: int, args: list, call_env: en.Environment, bo: ByteOutput):
-        bo.add_call(func_ptr)
+    def function_call(self, func: Function, args: list, call_env: en.Environment, bo: ByteOutput):
+        print(func.ptr)
+        bo.add_call(func.ptr)
+        bo.write_int(func.r_tal.total_len(self.memory))
         bo.write_int(len(args))
         for arg in args:
-            bo.write_int(arg[1])
+            # bo.write_int(arg[1])
             bo.write_int(arg[0])
+
+        return 0
 
     def compile_binary_op(self, node: ast.BinaryOperator, env: en.Environment, bo: ByteOutput):
         pass
 
     def compile_return(self, node: ast.ReturnStmt, env: en.Environment, bo: ByteOutput):
-        pass
+        r = self.compile(node.value, env, bo)
+        bo.add_return(r)
+        return r
 
 
 def get_tal_of_defining_node(node: ast.Node, env: en.Environment, mem: MemoryManager) -> en.Type:

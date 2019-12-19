@@ -151,8 +151,8 @@ class Literal(LeafNode):
 
         self.node_type = LITERAL
 
-        self.lit_pos = lit_pos
-        self.lit_type = lit_type
+        self.lit_pos: int = lit_pos
+        self.lit_type: int = lit_type
 
     def __str__(self):
         return "Lit #" + str(self.lit_pos)

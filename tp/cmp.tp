@@ -1,9 +1,24 @@
 
-fn test() int {
-    return 3;
+fn add(x: int, y: int) int {
+    return x + y;
+}
+
+fn ori(x: int) int {
+    return x;
+}
+
+fn test(x: int) int {
+    var y: int;
+    if x == 5 {
+        y = 10;
+    } else {
+        y = 1;
+    }
+    return y;
 }
 
 fn main() int {
-    var a: int = test();
-    return a;
+    var a: int = test(4);
+    var b: int = a + 5;
+    return b;
 }

@@ -25,6 +25,7 @@ if __name__ == '__main__':
         print("========== End of AST ==========")
 
         compiler = cmp.Compiler(parser.literal_bytes)
+        # compiler.compile(root)
         byt = compiler.compile_all(root)
 
         with open(target_file, "wb") as wf:

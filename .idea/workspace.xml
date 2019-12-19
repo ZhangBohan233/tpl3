@@ -10,11 +10,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="aae2efb2-7778-4cc3-ae20-bcb51cee43a1" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/bin/tpc_decompiler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bin/tpl_vm2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/spl_environment.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_environment.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_ast.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_ast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bin/spl_compiler2.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/spl_compiler2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bin/tpl_compiler.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/tpl_compiler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tp.py" beforeDir="false" afterPath="$PROJECT_DIR$/tp.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tp/cmp.tp" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tp/cmp.tpc" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tpc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tpc.py" beforeDir="false" afterPath="$PROJECT_DIR$/tpc.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,8 +194,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.tpc" />
         <item itemvalue="Python.tp" />
+        <item itemvalue="Python.tpc" />
         <item itemvalue="Python.tpl" />
         <item itemvalue="Python.spl_memory" />
         <item itemvalue="Python.test1" />
@@ -245,7 +250,9 @@
       <workItem from="1575950511926" duration="19000" />
       <workItem from="1576102998340" duration="18252000" />
       <workItem from="1576149380299" duration="7531000" />
-      <workItem from="1576206442994" duration="1151000" />
+      <workItem from="1576206442994" duration="1170000" />
+      <workItem from="1576301339075" duration="8713000" />
+      <workItem from="1576709276707" duration="30755000" />
     </task>
     <servers />
   </component>
@@ -265,22 +272,22 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1575950529941" />
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1576207430073">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom" timestamp="1576746720637">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1576207430073" />
-    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1576207430072">
+    <state width="1493" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1576746720637" />
+    <state width="1493" height="210" key="GridCell.Tab.0.center" timestamp="1576746720637">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1576207430072" />
-    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1576207430072">
+    <state width="1493" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1576746720637" />
+    <state width="1493" height="210" key="GridCell.Tab.0.left" timestamp="1576746720637">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1576207430072" />
-    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1576207430073">
+    <state width="1493" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1576746720637" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right" timestamp="1576746720637">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1576207430073" />
+    <state width="1493" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1576746720637" />
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1575928474552">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -289,13 +296,13 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/tpl3$spl.coverage" NAME="tpl Coverage Results" MODIFIED="1575626969342" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$spl_memory.coverage" NAME="spl_memory Coverage Results" MODIFIED="1574152361604" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
-    <SUITE FILE_PATH="coverage/tpl3$tpl.coverage" NAME="tpl Coverage Results" MODIFIED="1575929881029" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tpl3$tp.coverage" NAME="tp Coverage Results" MODIFIED="1575954745802" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tpl.coverage" NAME="tpl Coverage Results" MODIFIED="1576722656116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tp.coverage" NAME="tp Coverage Results" MODIFIED="1576746720630" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$compiler.coverage" NAME="compiler Coverage Results" MODIFIED="1575438441013" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/spl3$spl_types.coverage" NAME="spl_types Coverage Results" MODIFIED="1575374052360" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
     <SUITE FILE_PATH="coverage/tpl3$spl_memory.coverage" NAME="spl_memory Coverage Results" MODIFIED="1575671110224" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bin" />
     <SUITE FILE_PATH="coverage/spl3$test1.coverage" NAME="test1 Coverage Results" MODIFIED="1575538279899" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/sp" />
     <SUITE FILE_PATH="coverage/spl3$spl.coverage" NAME="spl Coverage Results" MODIFIED="1575608824667" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tpl3$tpc.coverage" NAME="tpc Coverage Results" MODIFIED="1576207430044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tpl3$tpc.coverage" NAME="tpc Coverage Results" MODIFIED="1576746717781" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

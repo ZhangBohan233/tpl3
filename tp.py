@@ -1,5 +1,5 @@
 import sys
-import bin.tpl_vm as vm
+import bin.tpl_vm2 as vm
 
 
 if __name__ == '__main__':
@@ -10,4 +10,4 @@ if __name__ == '__main__':
 
         machine = vm.VirtualMachine()
         machine.load_code(b)
-        machine.interpret()
+        machine.run()

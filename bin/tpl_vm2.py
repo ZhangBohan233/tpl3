@@ -1,4 +1,5 @@
 import bin.spl_types as typ
+import time
 
 INT_LEN = 8
 FLOAT_LEN = 8
@@ -27,7 +28,6 @@ class VirtualMachine:
 
         self.call_stack = []
         self.pc_backup = []
-        # self.
 
         self.op_table = {
             2: self.exit_func,
@@ -37,8 +37,14 @@ class VirtualMachine:
             6: self.goto,
             7: self.push_stack,
             10: self.add_i,
+            12: self.sub_i,
             16: self.eq_i,
-            30: self.if_zero_goto
+            30: self.if_zero_goto,
+            31: self.native_call
+        }
+
+        self.native_functions = {
+            1: self.native_clock
         }
 
     def load_code(self, codes: bytes):
@@ -85,6 +91,10 @@ class VirtualMachine:
         self.pc += INT_LEN
         return i1, i2, i3, i4
 
+    def read_3_real_ptr(self):
+        i1, i2, i3 = self.read_3_ints()
+        return self.generate_true_ptr(i1), self.generate_true_ptr(i2), self.generate_true_ptr(i3)
+
     def assign(self):
         tar, src, length = self.read_3_ints()
         # self.pc += INT_LEN * 3
@@ -98,11 +108,8 @@ class VirtualMachine:
         self.pc += arg_count * (PTR_LEN + INT_LEN)  # arg ptr, arg length
         print("call", func_ptr, r_len, arg_count)
 
-        # self.sp += r_len  # reserve the return location
-
         self.enter_func()
 
-        # TODO: copy args
         for i in range(arg_count):
             arg_ptr = typ.bytes_to_int(self.memory[pc_b:pc_b + PTR_LEN])
             pc_b += PTR_LEN
@@ -111,9 +118,26 @@ class VirtualMachine:
             self.mem_copy(arg_ptr, self.sp, arg_len)
             self.sp += arg_len
 
-        # self.sp += arg_count * PTR_LEN
-
         self.pc = func_ptr
+
+    def native_call(self):
+        func_ptr, r_len, r_ptr, arg_count = self.read_4_ints()
+        func_code = typ.bytes_to_int(self.get(func_ptr, INT_LEN))
+        # print("nat call", func_code)
+        real_r_ptr = self.generate_true_ptr(r_ptr)
+        pc_b = self.pc
+        self.pc += arg_count * (PTR_LEN + INT_LEN)  # arg ptr, arg length
+
+        args = []
+        for i in range(arg_count):
+            arg_ptr = typ.bytes_to_int(self.memory[pc_b:pc_b + PTR_LEN])
+            pc_b += PTR_LEN
+            arg_len = typ.bytes_to_int(self.memory[pc_b:pc_b + INT_LEN])
+            pc_b += INT_LEN
+            args.append((arg_ptr, arg_len))
+
+        func = self.native_functions[func_code]
+        self.call_native(func, args, real_r_ptr, r_len)
 
     def return_(self):
         v_ptr = typ.bytes_to_int(self.memory[self.pc:self.pc + INT_LEN])
@@ -139,13 +163,17 @@ class VirtualMachine:
         self.memory[pos:pos + len(byt)] = byt
 
     def add_i(self):
-        res, lp, rp = self.read_3_ints()
-        real_res = self.generate_true_ptr(res)
-        real_lp = self.generate_true_ptr(lp)
-        real_rp = self.generate_true_ptr(rp)
+        real_res, real_lp, real_rp = self.read_3_real_ptr()
         lv = self.get(real_lp, INT_LEN)
         rv = self.get(real_rp, INT_LEN)
         res_v = typ.int_add_int(lv, rv)
+        self.set(real_res, res_v)
+
+    def sub_i(self):
+        real_res, real_lp, real_rp = self.read_3_real_ptr()
+        lv = self.get(real_lp, INT_LEN)
+        rv = self.get(real_rp, INT_LEN)
+        res_v = typ.int_sub_int(lv, rv)
         self.set(real_res, res_v)
 
     def enter_func(self):
@@ -189,6 +217,17 @@ class VirtualMachine:
 
     def mem_copy(self, from_, to, length):
         self.memory[to:to + length] = self.memory[from_:from_ + length]
+
+    def native_clock(self):
+        t = time.time()
+        t_int = int(t * 1000)
+        return typ.int_to_bytes(t_int)
+
+    def call_native(self, ftn, args, r_ptr, r_len):
+        res = ftn(*args)
+        assert len(res) == r_len
+        if r_len > 0:
+            self.set(r_ptr, res)
 
     def print_memory(self):
         print("STACK: ", list(self.memory[:self.literal_begin]))

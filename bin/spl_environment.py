@@ -103,7 +103,7 @@ class Environment:
             raise VariableException("Variable or constant '{}' is not defined, in file '{}', at line {}"
                                     .format(name, lf[1], lf[0]))
 
-    def define_function(self, name: str, r_type: Type, func):
+    def define_function(self, name: str, func):
         raise EnvironmentException("Function must be declared in global scope")
         # self.functions[name] = func
 
@@ -196,7 +196,7 @@ class GlobalEnvironment(MainAbstractEnvironment):
         self.structs = {}
         self.functions: dict = {}
 
-    def define_function(self, name: str, r_type, func):
+    def define_function(self, name: str, func):
         self.functions[name] = func
 
     def get_function(self, name: str, lf):

@@ -13,7 +13,7 @@ VOID_LEN = 0
 
 STOP = 2     # STOP                                  | stop current process
 ASSIGN = 3   # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
-CALL = 4     # CALL     FN PTR    ARGS_LEN
+CALL = 4     # CALL
 RETURN = 5   # RETURN   VALUE_PTR
 GOTO = 6     # JUMP     CODE_PTR
 PUSH = 7     # PUSH
@@ -28,6 +28,7 @@ GT_I = 17    # GT
 LT_I = 18
 IF_ZERO_GOTO = 30
             # IF_ZERO   GOTO      VALUE_P            | if VALUE P is 0 then goto
+CALL_NAT = 31
 
 
 INT_RESULT_TABLE_INT = {
@@ -79,11 +80,6 @@ class ByteOutput:
         self.write_int(res)
         self.write_int(left)
         self.write_int(right)
-
-    # def add_if_zero_goto(self, tar_code_ptr: int, cond_ptr: int):
-    #     self.write_one(IF_ZERO_GOTO)
-    #     self.write_int(tar_code_ptr)
-    #     self.write_int(cond_ptr)
 
     def add_return(self, src, total_len):
         self.codes.append(RETURN)
@@ -151,7 +147,7 @@ class MemoryManager:
     def get_last_call(self):
         return self.blocks[-1]
 
-    def define_func(self, name, fn_bytes: bytes):
+    def define_func(self, fn_bytes: bytes):
         i = self.gp
         self.global_bytes.extend(fn_bytes)
         self.gp += len(fn_bytes)
@@ -177,6 +173,12 @@ class Function:
         self.ptr = ptr
 
 
+class NativeFunction:
+    def __init__(self, r_tal: en.Type, ptr: int):
+        self.r_tal: en.Type = r_tal
+        self.ptr = ptr
+
+
 class Compiler:
     def __init__(self, literal_bytes: bytes):
         self.memory = MemoryManager(literal_bytes)
@@ -195,14 +197,16 @@ class Compiler:
             ast.UNDEFINED_NODE: self.compile_undefined
         }
 
+    def add_native_functions(self, env: en.GlobalEnvironment):
+        p1 = self.memory.define_func(typ.int_to_bytes(1))  # 1: clock
+        env.define_function("clock", NativeFunction(en.Type("int"), p1))
+
     def compile_all(self, root: ast.Node) -> bytes:
         bo = ByteOutput()
 
-        # lit_len = len(self.literal_bytes)
-        # bo.write_int(lit_len)
-        # bo.codes.extend(self.literal_bytes)
-
         env = en.GlobalEnvironment()
+        self.add_native_functions(env)
+
         self.compile(root, env, bo)
 
         if "main" in env.functions:
@@ -232,14 +236,9 @@ class Compiler:
         return self.memory.calculate_lit_ptr(node.lit_pos)
 
     def compile_def_stmt(self, node: ast.DefStmt, env: en.Environment, bo: ByteOutput):
-
         r_tal = get_tal_of_defining_node(node.r_type, env, self.memory)
-        # ftn_ptr = self.memory.gp
-        # env.define_function(node.name, r_tal, self.memory.gp)
 
         inner_bo = ByteOutput()
-        # inner_bo.write_int(r_tal.total_len(self.memory))  # write the rtype len
-        # st = inner_bo.reserve_space(INT_LEN)
         scope = en.FunctionEnvironment(env)
         self.memory.push_stack()
 
@@ -259,23 +258,13 @@ class Compiler:
             param_pairs.append(param_pair)
 
         self.compile(node.body, scope, inner_bo)
-        # func_len = len(inner_bo) - st - INT_LEN
-        # len_b = typ.int_to_bytes(func_len)
-        # inner_bo.set_bytes(st, len_b)
 
         self.memory.restore_stack()
         inner_bo.write_one(STOP)
-        ftn_ptr = self.memory.define_func(node.name, bytes(inner_bo))
+        ftn_ptr = self.memory.define_func(bytes(inner_bo))
 
         ftn = Function(param_pairs, r_tal, ftn_ptr)
-        env.define_function(node.name, r_tal, ftn)
-
-        # print(scope.variables)
-        # ftn = Function(param_pairs, r_tal, ftn_ptr)
-        # env.define_function(node.name, r_tal, ftn)
-
-        # print(inner_bo.codes)
-        # bo.add_function(bytes(inner_bo))
+        env.define_function(node.name, ftn)
 
     def compile_name_node(self, node: ast.NameNode, env: en.Environment, bo: ByteOutput):
         lf = node.line_num, node.file
@@ -312,8 +301,7 @@ class Compiler:
 
         lf = node.line_num, node.file
 
-        # TODO: check is native function
-        ftn: Function = env.get_function(node.call_obj.name, lf)
+        ftn = env.get_function(node.call_obj.name, lf)
 
         args = []  # args tuple
         for arg_node in node.args.lines:
@@ -324,19 +312,40 @@ class Compiler:
             tup = arg_ptr, total_len
             args.append(tup)
 
-        return self.function_call(ftn, args, env, bo)
+        if isinstance(ftn, Function):
+            return self.function_call(ftn, args, env, bo)
+        elif isinstance(ftn, NativeFunction):
+            return self.native_function_call(ftn, args, env, bo)
+        else:
+            raise lib.CompileTimeException("Unexpected function type")
 
     def function_call(self, func: Function, args: list, call_env: en.Environment, bo: ByteOutput):
         r_len = func.r_tal.total_len(self.memory)
         r_ptr = self.memory.allocate(r_len)
         bo.push_stack(r_len)
         # self.func_return_ptr.append(r_ptr)
-        print("call", func.ptr, self.memory.sp, r_ptr)
+        # print("call", func.ptr, self.memory.sp, r_ptr)
 
         bo.write_one(CALL)
         bo.write_int(func.ptr)
         bo.write_int(r_len)  # rtype length
         # bo.write_int(r_ptr)  # return value ptr
+        bo.write_int(len(args))
+        for arg in args:
+            bo.write_int(arg[0])
+            bo.write_int(arg[1])
+
+        return r_ptr
+
+    def native_function_call(self, func: NativeFunction, args: list, call_env, bo: ByteOutput):
+        r_len = func.r_tal.total_len(self.memory)
+        r_ptr = self.memory.allocate(r_len)
+        bo.push_stack(r_len)
+
+        bo.write_one(CALL_NAT)
+        bo.write_int(func.ptr)
+        bo.write_int(r_len)  # rtype length
+        bo.write_int(r_ptr)  # return value ptr
         bo.write_int(len(args))
         for arg in args:
             bo.write_int(arg[0])

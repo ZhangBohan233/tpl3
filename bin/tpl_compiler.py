@@ -10,26 +10,24 @@ BOOLEAN_LEN = 1
 CHAR_LEN = 1
 VOID_LEN = 0
 
-
-STOP = 2     # STOP                                  | stop current process
-ASSIGN = 3   # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
-CALL = 4     # CALL
-RETURN = 5   # RETURN   VALUE_PTR
-GOTO = 6     # JUMP     CODE_PTR
-PUSH = 7     # PUSH
-ADD_I = 10   # ADD_I    RESULT_P  LEFT_P   RIGHT_P   | add the ints pointed by pointers, store the result to RESULT_P
+STOP = 2  # STOP                                  | stop current process
+ASSIGN = 3  # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
+CALL = 4  # CALL
+RETURN = 5  # RETURN   VALUE_PTR
+GOTO = 6  # JUMP     CODE_PTR
+PUSH = 7  # PUSH
+ADD_I = 10  # ADD_I    RESULT_P  LEFT_P   RIGHT_P   | add the ints pointed by pointers, store the result to RESULT_P
 CAST_I = 11  # CAST_I                                | cast to int
 SUB_I = 12
 MUL_I = 13
 DIV_I = 14
 MOD_I = 15
-EQ_I = 16    # EQ       RES PTR   LEFT_P   RIGHT_P   | set RES PTR to 0 if LEFT_P == RIGHT_P
-GT_I = 17    # GT
+EQ_I = 16  # EQ       RES PTR   LEFT_P   RIGHT_P   | set RES PTR to 0 if LEFT_P == RIGHT_P
+GT_I = 17  # GT
 LT_I = 18
 IF_ZERO_GOTO = 30
-            # IF_ZERO   GOTO      VALUE_P            | if VALUE P is 0 then goto
+# IF_ZERO   GOTO      VALUE_P            | if VALUE P is 0 then goto
 CALL_NAT = 31
-
 
 INT_RESULT_TABLE_INT = {
     "+": ADD_I,
@@ -106,6 +104,7 @@ class MemoryManager:
         self.global_begins = 1024 + len(literal_bytes)
         self.gp = self.global_begins
 
+        self.literal = literal_bytes
         self.global_bytes = bytearray()
         # self.functions = {}
 
@@ -134,11 +133,9 @@ class MemoryManager:
     def allocate(self, length) -> int:
         if len(self.blocks) == 0:  # global
             ptr = self.sp
-            self.sp += ptr
-            # self.gp += length
         else:  # in call
             ptr = self.sp - self.blocks[-1]
-            self.sp += length
+        self.sp += length
         return ptr
 
     def calculate_lit_ptr(self, lit_num):
@@ -207,6 +204,8 @@ class Compiler:
         env = en.GlobalEnvironment()
         self.add_native_functions(env)
 
+        # print(self.memory.global_bytes)
+
         self.compile(root, env, bo)
 
         if "main" in env.functions:
@@ -250,18 +249,28 @@ class Compiler:
             total_len = tal.total_len(self.memory)
 
             ptr = self.memory.allocate(total_len)
-            inner_bo.push_stack(total_len)
+            # print(ptr)
+            # inner_bo.push_stack(total_len)
 
             scope.define_var(name_node.name, tal, ptr)
 
             param_pair = ParameterPair(name_node.name, tal)
             param_pairs.append(param_pair)
 
+        fake_ftn_ptr = self.memory.define_func(bytes(0))  # pre-defined for recursion
+        # print("allocated to", fake_ftn_ptr, self.memory.global_bytes)
+        fake_ftn = Function(param_pairs, r_tal, fake_ftn_ptr)
+        env.define_function(node.name, fake_ftn)
+
         self.compile(node.body, scope, inner_bo)
 
         self.memory.restore_stack()
         inner_bo.write_one(STOP)
+
         ftn_ptr = self.memory.define_func(bytes(inner_bo))
+
+        assert fake_ftn_ptr == ftn_ptr
+        # print(ftn_ptr)
 
         ftn = Function(param_pairs, r_tal, ftn_ptr)
         env.define_function(node.name, ftn)
@@ -275,7 +284,7 @@ class Compiler:
         r = self.compile(node.right, env, bo)
         lf = node.line_num, node.file
 
-        if node.left.node_type == ast.NAME_NODE:
+        if node.left.node_type == ast.NAME_NODE:  # assign
             if node.level == ast.ASSIGN:
                 ptr = env.get(node.left.name, lf)
                 tal = get_tal_of_evaluated_node(node.left, env)
@@ -283,7 +292,7 @@ class Compiler:
 
                 bo.assign(ptr, r, total_len)
 
-        elif node.left.node_type == ast.TYPE_NODE:
+        elif node.left.node_type == ast.TYPE_NODE:  # define
             type_node: ast.TypeNode = node.left
             if node.level == ast.VAR:
                 tal = get_tal_of_defining_node(type_node.right, env, self.memory)
@@ -295,6 +304,13 @@ class Compiler:
                 env.define_var(type_node.left.name, tal, ptr)
 
                 bo.assign(ptr, r, total_len)
+
+        elif node.left.node_type == ast.INDEXING_NODE:  # set item
+            left_node: ast.IndexingNode = node.left
+            print(left_node)
+
+    def get_unit_len_of_indexing(self, node: ast.IndexingNode):
+        pass
 
     def compile_call(self, node: ast.FuncCall, env: en.Environment, bo: ByteOutput):
         assert node.call_obj.node_type == ast.NAME_NODE
@@ -309,6 +325,7 @@ class Compiler:
             total_len = tal.total_len(self.memory)
 
             arg_ptr = self.compile(arg_node, env, bo)
+            print("arg_ptr", arg_node, arg_ptr, total_len)
             tup = arg_ptr, total_len
             args.append(tup)
 
@@ -323,14 +340,17 @@ class Compiler:
         r_len = func.r_tal.total_len(self.memory)
         r_ptr = self.memory.allocate(r_len)
         bo.push_stack(r_len)
+        # print("put func {} r ptr to {}".format(func.ptr, r_ptr))
         # self.func_return_ptr.append(r_ptr)
         # print("call", func.ptr, self.memory.sp, r_ptr)
 
+        # print(args)
+
         bo.write_one(CALL)
         bo.write_int(func.ptr)
-        bo.write_int(r_len)  # rtype length
-        # bo.write_int(r_ptr)  # return value ptr
-        bo.write_int(len(args))
+        bo.write_int(r_ptr)  # return value ptr
+        bo.write_one(r_len)  # rtype length
+        bo.write_one(len(args))
         for arg in args:
             bo.write_int(arg[0])
             bo.write_int(arg[1])
@@ -347,6 +367,7 @@ class Compiler:
         bo.write_int(r_len)  # rtype length
         bo.write_int(r_ptr)  # return value ptr
         bo.write_int(len(args))
+
         for arg in args:
             bo.write_int(arg[0])
             bo.write_int(arg[1])
@@ -420,16 +441,19 @@ def get_tal_of_defining_node(node: ast.Node, env: en.Environment, mem: MemoryMan
     if node.node_type == ast.NAME_NODE:
         node: ast.NameNode
         return en.Type(node.name)
-    # elif node.node_type == ast.INDEXING_NODE:  # array
-    #     node: ast.IndexingNode
-    #     tn_al_inner: en.Type = get_tal_of_defining_node(node.call_obj, env, mem)
-    #     if len(node.arg.lines) == 0:
-    #         return en.Type(tn_al_inner.type_name, 0)
-    #     arr_len_ptr = evaluate(node.arg, env)
-    #     arr_len_b = mem.MEMORY.get(arr_len_ptr, INT_LEN)
-    #     arr_len_v = typ.bytes_to_int(arr_len_b)
-    #     # return type_name, arr_len_inner * typ.bytes_to_int(arr_len_b)
-    #     return en.Type(tn_al_inner.type_name, *tn_al_inner.array_lengths, arr_len_v)
+    elif node.node_type == ast.INDEXING_NODE:  # array
+        node: ast.IndexingNode
+        tn_al_inner: en.Type = get_tal_of_defining_node(node.call_obj, env, mem)
+        if len(node.arg.lines) == 0:
+            return en.Type(tn_al_inner.type_name, 0)
+        length_lit = node.arg.lines[0]
+        if not isinstance(length_lit, ast.Literal) or length_lit.lit_type != 0:
+            raise lib.CompileTimeException("Array length must be fixed int literal")
+        lit_pos = length_lit.lit_pos
+        arr_len_b = mem.literal[lit_pos: lit_pos + INT_LEN]
+        arr_len_v = typ.bytes_to_int(arr_len_b)
+        # return type_name, arr_len_inner * typ.bytes_to_int(arr_len_b)
+        return en.Type(tn_al_inner.type_name, *tn_al_inner.array_lengths, arr_len_v)
     elif node.node_type == ast.UNARY_OPERATOR:
         node: ast.UnaryOperator
         tal = get_tal_of_defining_node(node.value, env, mem)

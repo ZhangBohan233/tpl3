@@ -1,26 +1,22 @@
 
-fn add(x: int, y: int) int {
+fn t2(x: int, y: int) int {
     return x + y;
 }
 
-fn ori(x: int) int {
-    return x;
+fn t1(n: int) int {
+    return t2(n, n + 1);
 }
 
-fn test(x: int) int {
-    var y: int;
-    if x == 5 {
-        y = 10;
+fn fib(n: int) int {
+    //printf("%d", &n);
+    if n < 2 {
+        return n;
     } else {
-        y = 1;
+        return fib(n - 1) + fib(n - 2);
     }
-    return y;
 }
 
 fn main() int {
-    var t0: int = clock();
-    var a: int = test(4);
-    var b: int = a + 5;
-    var t1: int = clock();
-    return t1 - t0;
+    var a: int = fib(7);
+    return a;
 }

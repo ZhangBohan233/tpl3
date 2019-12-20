@@ -340,17 +340,12 @@ class Compiler:
         r_len = func.r_tal.total_len(self.memory)
         r_ptr = self.memory.allocate(r_len)
         bo.push_stack(r_len)
-        # print("put func {} r ptr to {}".format(func.ptr, r_ptr))
-        # self.func_return_ptr.append(r_ptr)
-        # print("call", func.ptr, self.memory.sp, r_ptr)
-
-        # print(args)
 
         bo.write_one(CALL)
         bo.write_int(func.ptr)
-        bo.write_int(r_ptr)  # return value ptr
-        bo.write_one(r_len)  # rtype length
-        bo.write_one(len(args))
+        # bo.write_int(r_ptr)  # return value ptr
+        bo.write_int(r_len)  # rtype length
+        bo.write_int(len(args))
         for arg in args:
             bo.write_int(arg[0])
             bo.write_int(arg[1])

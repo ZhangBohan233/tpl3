@@ -1,3 +1,8 @@
+#### Build 1003 ####
+
+20 fib: 1140 ms
+1000 struct malloc and free: 730 ms
+
 #### Build 1002 ####
 
 1000 struct malloc and free: 750 ms

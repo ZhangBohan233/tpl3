@@ -32,8 +32,7 @@ class VirtualMachine:
         self.memory = bytearray(self.memory_size)
 
         self.call_stack = []
-        self.pc_backup = []
-        self.r_ptr_stack = []
+        self.pc_stack = []
 
         self.op_table = {
             2: self.exit_func,
@@ -117,16 +116,12 @@ class VirtualMachine:
         self.mem_copy(real_src, real_tar, length)
 
     def call(self):
-        # func_ptr, r_len, r_ptr, arg_count = self.read_4_ints()
-        func_ptr, r_ptr = self.read_2_ints()
-        r_len = self.memory[self.pc]
-        arg_count = self.memory[self.pc + 1]
-        self.pc += 2
+        func_ptr, r_len, arg_count = self.read_3_ints()
         pc_b = self.pc
         self.pc += arg_count * (PTR_LEN + INT_LEN)  # arg ptr, arg length
-        print("call", func_ptr, r_len, arg_count)
+        # print("call", func_ptr, r_len, arg_count)
 
-        self.r_ptr_stack.append(self.generate_true_ptr(r_ptr))
+        # self.r_ptr_stack.append(self.generate_true_ptr(r_ptr))
 
         sp_b = self.sp
 
@@ -140,7 +135,7 @@ class VirtualMachine:
             self.mem_copy(real_arg_ptr, self.sp, arg_len)
             self.sp += arg_len
 
-        self.pc_backup.append(self.pc)
+        self.pc_stack.append(self.pc)
         self.call_stack.append(sp_b)
 
         self.pc = func_ptr
@@ -159,7 +154,8 @@ class VirtualMachine:
             pc_b += PTR_LEN
             arg_len = typ.bytes_to_int(self.get(pc_b, INT_LEN))
             pc_b += INT_LEN
-            args.append((arg_ptr, arg_len))
+            true_arg_ptr = self.generate_true_ptr(arg_ptr)
+            args.append((true_arg_ptr, arg_len))
 
         func = self.native_functions[func_code]
         self.call_native(func, args, real_r_ptr, r_len)
@@ -170,10 +166,7 @@ class VirtualMachine:
         real_v_ptr = self.generate_true_ptr(v_ptr)
 
         to = self.call_stack[-1] - rtn_len
-        to2 = self.r_ptr_stack.pop()
-        print(to, to2)
-        # print("return", real_v_ptr, rtn_len, to, to - self.call_stack[-2])
-        self.mem_copy(real_v_ptr, to2, rtn_len)
+        self.mem_copy(real_v_ptr, to, rtn_len)
 
         self.exit_func()
 
@@ -209,14 +202,14 @@ class VirtualMachine:
         res_v = typ.int_sub_int(lv, rv)
         self.set(real_res, res_v)
 
-    def enter_func(self):
-        # print("enter", self.sp)
-        self.call_stack.append(self.sp)
-        self.pc_backup.append(self.pc)
+    # def enter_func(self):
+    #     # print("enter", self.sp)
+    #     self.call_stack.append(self.sp)
+    #     self.pc_stack.append(self.pc)
 
     def exit_func(self):
         self.sp = self.call_stack.pop()
-        self.pc = self.pc_backup.pop()
+        self.pc = self.pc_stack.pop()
         # print("exit", self.sp)
 
     def eq_i(self):

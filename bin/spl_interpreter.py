@@ -456,7 +456,13 @@ def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
         node: ast.FuncCall
         call_obj = node.call_obj
         if call_obj.node_type == ast.NAME_NODE:
-            func: Function = env.get_function(call_obj.name, (node.line_num, node.file))
+            func_group: dict = env.get_function(call_obj.name, (node.line_num, node.file))
+            arg_types = []
+            for orig_arg in node.args.lines:
+                tal = get_tal_of_evaluated_node(orig_arg, env)
+                arg_types.append(tal)
+            types_id = en.args_type_hash(arg_types)
+            func = func_group[types_id]
             return func.r_tal
     elif node.node_type == ast.INDEXING_NODE:  # array
         node: ast.IndexingNode

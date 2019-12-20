@@ -3,8 +3,21 @@ struct Node {
     var ptr: *Node;
 }
 
+fn fib(n: int) int {
+    if n < 2 {
+        return n;
+    } else {
+        return fib(n - 1) + fib(n - 2);
+    }
+}
+
 fn main() int {
+    const t0: int = clock();
+
+    var fib_res: int = fib(20);
+
     const t1: int = clock();
+    printf("Fib result: %d, time: %d", fib_res, t1 - t0);
 
     var h: *Node = malloc(sizeof(Node));
     var x: *Node = h;

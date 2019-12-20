@@ -17,6 +17,6 @@ fn fib(n: int) int {
 }
 
 fn main() int {
-    var a: int = fib(7);
+    var a: int = fib(8);
     return a;
 }

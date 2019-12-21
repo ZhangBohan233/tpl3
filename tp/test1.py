@@ -19,23 +19,24 @@ def get_mul(b, m):
     return b.v
 
 
+def fib(n):
+    if n < 2:
+        return n
+    else:
+        return fib(n - 1) + fib(n - 2)
+
+
 if __name__ == '__main__':
     import time
 
-    n = 5000
+    # n = 5000
 
     t1 = time.time()
 
-    for j in range(n):
-        x = A()
-        x.get_mul(n)
+    fib(30)
 
     t2 = time.time()
 
-    for j in range(n):
-        x = B()
-        get_mul(x, n)
-
     t3 = time.time()
 
-    print(t2 - t1, t3 - t2)
+    print((t2 - t1) * 1000, t3 - t2)

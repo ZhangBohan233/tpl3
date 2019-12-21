@@ -14,10 +14,11 @@ STOP = 2  # STOP                                  | stop current process
 ASSIGN = 3  # ASSIGN   TARGET    SOURCE   LENGTH    | copy LENGTH bytes from SOURCE to TARGET
 CALL = 4  # CALL
 RETURN = 5  # RETURN   VALUE_PTR
-GOTO = 6  # JUMP     CODE_PTR
+GOTO = 6  # JUMP       CODE_PTR
 PUSH = 7  # PUSH
+ASSIGN_I = 8  # A      PTR       REAL VALUE         | store the real value in PTR
 ADD_I = 10  # ADD_I    RESULT_P  LEFT_P   RIGHT_P   | add the ints pointed by pointers, store the result to RESULT_P
-CAST_I = 11  # CAST_I                                | cast to int
+CAST_I = 11  # CAST_I                               | cast to int
 SUB_I = 12
 MUL_I = 13
 DIV_I = 14
@@ -28,6 +29,9 @@ LT_I = 18
 IF_ZERO_GOTO = 30
 # IF_ZERO   GOTO      VALUE_P            | if VALUE P is 0 then goto
 CALL_NAT = 31
+STORE_ADDR = 32
+UNPACK_ADDR = 33
+PTR_ASSIGN = 34  # | assign the addr stored in ptr with the value stored in right
 
 INT_RESULT_TABLE_INT = {
     "+": ADD_I,
@@ -66,6 +70,23 @@ class ByteOutput:
         self.codes.append(ASSIGN)
         self.write_int(tar)
         self.write_int(src)
+        self.write_int(length)
+
+    def assign_i(self, des: int, real_value: int):
+        self.write_one(ASSIGN_I)
+        self.write_int(des)
+        self.write_int(real_value)
+
+    def unpack_addr(self, des: int, addr_ptr: int, length: int):
+        self.write_one(UNPACK_ADDR)
+        self.write_int(des)
+        self.write_int(addr_ptr)
+        self.write_int(length)
+
+    def ptr_assign(self, des_ptr: int, right: int, length: int):
+        self.write_one(PTR_ASSIGN)
+        self.write_int(des_ptr)
+        self.write_int(right)
         self.write_int(length)
 
     def cast_to_int(self, tar: int, src: int):
@@ -188,10 +209,12 @@ class Compiler:
             ast.BLOCK_STMT: self.compile_block_stmt,
             ast.FUNCTION_CALL: self.compile_call,
             ast.BINARY_OPERATOR: self.compile_binary_op,
+            ast.UNARY_OPERATOR: self.compile_unary_op,
             ast.RETURN_STMT: self.compile_return,
             ast.ASSIGNMENT_NODE: self.compile_assignment_node,
             ast.IF_STMT: self.compile_if,
-            ast.UNDEFINED_NODE: self.compile_undefined
+            ast.UNDEFINED_NODE: self.compile_undefined,
+            ast.INDEXING_NODE: self.compile_getitem
         }
 
     def add_native_functions(self, env: en.GlobalEnvironment):
@@ -298,19 +321,71 @@ class Compiler:
                 tal = get_tal_of_defining_node(type_node.right, env, self.memory)
                 total_len = tal.total_len(self.memory)
 
-                ptr = self.memory.allocate(total_len)
-                bo.push_stack(total_len)
+                if en.is_pointer(tal):
+                    assert total_len == PTR_LEN
+                    ptr = self.memory.allocate(PTR_LEN)
+                    bo.push_stack(PTR_LEN)
+                    bo.assign_i(ptr, r)
+                elif en.is_array(tal):
+                    ptr = self.memory.allocate(PTR_LEN)
+                    bo.push_stack(PTR_LEN)
+                    arr_ptr = self.memory.allocate(total_len)
+                    bo.push_stack(arr_ptr)
+                    bo.assign_i(ptr, arr_ptr)
+                else:
+                    ptr = self.memory.allocate(total_len)
+                    bo.push_stack(total_len)
+                    bo.assign(ptr, r, total_len)
 
                 env.define_var(type_node.left.name, tal, ptr)
 
-                bo.assign(ptr, r, total_len)
-
         elif node.left.node_type == ast.INDEXING_NODE:  # set item
             left_node: ast.IndexingNode = node.left
-            print(left_node)
+            self.get_unit_len_of_indexing(left_node, env)
 
-    def get_unit_len_of_indexing(self, node: ast.IndexingNode):
+        elif node.left.node_type == ast.UNARY_OPERATOR:
+            left_node: ast.UnaryOperator = node.left
+            l_tal = get_tal_of_evaluated_node(left_node, env)
+            if left_node.operation == "unpack" or en.is_array(l_tal):
+                res_ptr = self.get_unpack_final_pos(left_node, env, bo)
+                print(res_ptr)
+                orig_tal = get_tal_of_evaluated_node(left_node, env)
+                bo.ptr_assign(res_ptr, r, orig_tal.total_len(self.memory))
+
+    def compile_getitem(self, node: ast.IndexingNode, env: en.Environment, bo: ByteOutput):
         pass
+
+    def get_unit_len_of_indexing(self, node: ast.IndexingNode, env: en.Environment):
+        call_obj_tal = get_tal_of_node_self(node.call_obj, env)
+        if en.is_array(call_obj_tal):
+            depth = index_node_depth(node)
+            if depth > len(call_obj_tal.array_lengths):
+                raise lib.CompileTimeException("Indexing depth greater than array dimension")
+
+        elif call_obj_tal.type_name[0] == "*":
+            pass
+        else:
+            raise lib.TypeException("Type '{}' not supporting indexing".format(en.type_to_readable(call_obj_tal)))
+
+    # def get_indexing_location_and_unit_len(self, node: ast.IndexingNode, env: en.Environment) -> (int, int):
+    #     l_ptr = evaluate(node.call_obj, env)
+    #     l_tal = get_tal_of_node_self(node, env)
+    #     if en.is_array(l_tal):
+    #         depth = index_node_depth(node)
+    #         unit_length = l_tal.total_len()
+    #         for i in range(depth):
+    #             unit_length //= l_tal.array_lengths[i]
+    #     elif l_tal.type_name[0] == "*":
+    #         ptr_b = mem.MEMORY.get(l_ptr, PTR_LEN)
+    #         l_ptr = typ.bytes_to_int(ptr_b)
+    #         unit_length = mem.MEMORY.get_type_size(l_tal.type_name[1:])
+    #     else:
+    #         raise lib.TypeException("Type '{}' not supporting indexing".format(en.type_to_readable(l_tal)))
+    #
+    #     arg_ptr = evaluate(node.arg, env)  # arg type must be int
+    #     arg_b = mem.MEMORY.get(arg_ptr, mem.MEMORY.get_type_size("int"))
+    #     arg_v = typ.bytes_to_int(arg_b)
+    #     return l_ptr + arg_v * unit_length, unit_length
 
     def compile_call(self, node: ast.FuncCall, env: en.Environment, bo: ByteOutput):
         assert node.call_obj.node_type == ast.NAME_NODE
@@ -325,7 +400,7 @@ class Compiler:
             total_len = tal.total_len(self.memory)
 
             arg_ptr = self.compile(arg_node, env, bo)
-            print("arg_ptr", arg_node, arg_ptr, total_len)
+            # print("arg_ptr", arg_node, arg_ptr, total_len)
             tup = arg_ptr, total_len
             args.append(tup)
 
@@ -369,11 +444,32 @@ class Compiler:
 
         return r_ptr
 
+    def compile_unary_op(self, node: ast.UnaryOperator, env: en.Environment, bo: ByteOutput):
+        if node.operation == "pack":
+            num_ptr = self.compile(node.value, env, bo)
+            return num_ptr
+            # ptr_ptr = self.memory.allocate(PTR_LEN)  # must be ptr
+            # bo.push_stack(PTR_LEN)
+            # bo.assign_i(ptr_ptr, num_ptr)
+            # return ptr_ptr
+        elif node.operation == "unpack":
+            orig_tal = get_tal_of_evaluated_node(node, env)
+            total_len = orig_tal.total_len(self.memory)
+            ptr_ptr = self.compile(node.value, env, bo)
+            # print(ptr_ptr)
+            num_ptr = self.memory.allocate(total_len)
+            # print(num_ptr)
+            bo.push_stack(total_len)
+            bo.unpack_addr(num_ptr, ptr_ptr, total_len)
+            return num_ptr
+        else:  # normal unary operators
+            raise lib.CompileTimeException("Not implemented")
+
     def compile_binary_op(self, node: ast.BinaryOperator, env: en.Environment, bo: ByteOutput):
         l_tal = get_tal_of_evaluated_node(node.left, env)
         r_tal = get_tal_of_evaluated_node(node.right, env)
         # print(l_tal, r_tal, node.operation)
-        if l_tal.type_name == "int" or l_tal.type_name[0] == "*":
+        if l_tal.type_name == "int" or l_tal.type_name[0] == "*" or en.is_array(l_tal):
             lp = self.compile(node.left, env, bo)
             rp = self.compile(node.right, env, bo)
             if r_tal.type_name != "int" and r_tal.type_name[0] != "*":
@@ -391,6 +487,8 @@ class Compiler:
                 op_code = BOOL_RESULT_TABLE_INT[node.operation]
                 bo.add_binary_op_int(op_code, res_pos, lp, rp)
                 return res_pos
+
+        raise lib.CompileTimeException("Unsupported binary operation")
 
     def case_to_int(self, ptr, bo: ByteOutput):
         res_pos = self.memory.allocate(INT_LEN)
@@ -431,6 +529,23 @@ class Compiler:
     def compile_undefined(self, node: ast.UndefinedNode, env: en.Environment, bo: ByteOutput):
         return 0
 
+    def get_unpack_final_pos(self, node: ast.UnaryOperator, env: en.Environment, bo):
+        if isinstance(node, ast.UnaryOperator) and node.operation == "unpack":
+            return self.get_unpack_final_pos(node.value, env, bo)
+        elif isinstance(node, ast.NameNode):
+            return env.get(node.name, (node.line_num, node.file))
+        elif isinstance(node, ast.Expr):
+            return self.compile(node, env, bo)
+        else:
+            raise lib.CompileTimeException()
+
+
+def index_node_depth(node: ast.IndexingNode):
+    if node.call_obj.node_type == ast.INDEXING_NODE:
+        return index_node_depth(node.call_obj) + 1
+    else:
+        return 1
+
 
 def get_tal_of_defining_node(node: ast.Node, env: en.Environment, mem: MemoryManager) -> en.Type:
     if node.node_type == ast.NAME_NODE:
@@ -467,6 +582,18 @@ LITERAL_TYPE_TABLE = {
 }
 
 
+def get_tal_of_node_self(node: ast.Node, env: en.Environment) -> en.Type:
+    if node.node_type == ast.NAME_NODE:
+        node: ast.NameNode
+        return env.get_type_arr_len(node.name, (node.line_num, node.file))
+    elif node.node_type == ast.INDEXING_NODE:
+        node: ast.IndexingNode
+        return get_tal_of_node_self(node.call_obj, env)
+    elif node.node_type == ast.UNARY_OPERATOR:
+        node: ast.UnaryOperator
+        print(2223)
+
+
 def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
     if node.node_type == ast.LITERAL:
         node: ast.Literal
@@ -483,6 +610,8 @@ def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
         if node.operation == "unpack":
             if len(tal.type_name) > 1 and tal.type_name[0] == "*":
                 return en.Type(tal.type_name[1:])
+            elif len(tal.array_lengths) > 0:
+                return en.Type(tal.type_name, *tal.array_lengths[1:])
             else:
                 raise lib.TypeException("Cannot unpack a non-pointer type")
         elif node.operation == "pack":

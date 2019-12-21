@@ -160,7 +160,7 @@ class Tokenizer:
                         i += 2
                         continue
                 else:
-                    if ch == "/" and i < length - 1 and line[i + 1] == "*":
+                    if ch == "/" and i < length - 1 and line[i + 1] == "*" and (i == 0 or line[i - 1] != "/"):
                         in_doc = True
                         i += 1
 

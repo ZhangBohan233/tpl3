@@ -1,0 +1,14 @@
+fn fib(n: int) int {
+    if n < 2 {
+        return n;
+    } else {
+        return fib(n - 1) + fib(n - 2);
+    }
+}
+
+fn main() int {
+    var t0: int = clock();
+    fib(30);
+    var t1: int = clock();
+    return t1 - t0;
+}

@@ -52,6 +52,10 @@ def is_array(t: Type) -> bool:
     return len(t.array_lengths) > 0
 
 
+def is_pointer(t: Type) -> bool:
+    return t.type_name[0] == "*"
+
+
 UNDEFINED = Undefined()
 
 

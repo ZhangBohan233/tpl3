@@ -30,6 +30,9 @@ class Type:
             arr_len *= x
         return mm.get_type_size(self.type_name) * arr_len
 
+    def unit_len(self, mm):
+        return mm.get_type_size(self.type_name)
+
 
 def type_total_len(t: Type) -> int:
     arr_len = 1

@@ -1,10 +1,22 @@
 
+fn test(a: *int) int {
+    *a = 333;
+    return 0;
+}
+
 fn main() int {
     var j: int = 77777777;
-    var n: int[9];
+    var i: int = 6;
+    var ip: int[3];
+    var m: int = 257;
 
-    *n = 5;
-    *(n+8) = 7;
+    *ip = 99;
+    *(ip + 8) = 66;
+    *(ip + 16) = 33;
 
-    return *(n+8);
+    ip[2] = 55;
+
+    //ip[1];  // *(ip + 8 * 2 * (1) + 8 * (0))
+
+    return ip[2];
 }

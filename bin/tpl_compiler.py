@@ -220,6 +220,8 @@ class Compiler:
     def add_native_functions(self, env: en.GlobalEnvironment):
         p1 = self.memory.define_func(typ.int_to_bytes(1))  # 1: clock
         env.define_function("clock", NativeFunction(en.Type("int"), p1))
+        p2 = self.memory.define_func(typ.int_to_bytes(2))  # 2: malloc
+        env.define_function("malloc", NativeFunction(en.Type("*void"), p2))
 
     def compile_all(self, root: ast.Node) -> bytes:
         bo = ByteOutput()
@@ -325,13 +327,17 @@ class Compiler:
                     assert total_len == PTR_LEN
                     ptr = self.memory.allocate(PTR_LEN)
                     bo.push_stack(PTR_LEN)
-                    bo.assign_i(ptr, r)
+                    bo.assign(ptr, r, PTR_LEN)
                 elif en.is_array(tal):
+                    if len(tal.array_lengths) > 1:
+                        raise lib.CompileTimeException("High dimensional array not supported")
                     ptr = self.memory.allocate(PTR_LEN)
                     bo.push_stack(PTR_LEN)
                     arr_ptr = self.memory.allocate(total_len)
-                    bo.push_stack(arr_ptr)
+                    # print(total_len)
+                    bo.push_stack(total_len)
                     bo.assign_i(ptr, arr_ptr)
+                    # print(ptr)
                 else:
                     ptr = self.memory.allocate(total_len)
                     bo.push_stack(total_len)
@@ -341,29 +347,59 @@ class Compiler:
 
         elif node.left.node_type == ast.INDEXING_NODE:  # set item
             left_node: ast.IndexingNode = node.left
-            self.get_unit_len_of_indexing(left_node, env)
+            self.compile_setitem(left_node, r, env, bo)
 
         elif node.left.node_type == ast.UNARY_OPERATOR:
             left_node: ast.UnaryOperator = node.left
             l_tal = get_tal_of_evaluated_node(left_node, env)
             if left_node.operation == "unpack" or en.is_array(l_tal):
                 res_ptr = self.get_unpack_final_pos(left_node, env, bo)
-                print(res_ptr)
+                # print(res_ptr)
                 orig_tal = get_tal_of_evaluated_node(left_node, env)
-                bo.ptr_assign(res_ptr, r, orig_tal.total_len(self.memory))
+                bo.ptr_assign(res_ptr, r, orig_tal.unit_len(self.memory))
+
+    def compile_setitem(self, node: ast.IndexingNode, value_ptr: int, env: en.Environment, bo: ByteOutput):
+        indexing_ptr, unit_len = self.get_indexing_ptr_and_unit_len(node, env, bo)
+
+        bo.ptr_assign(indexing_ptr, value_ptr, unit_len)
 
     def compile_getitem(self, node: ast.IndexingNode, env: en.Environment, bo: ByteOutput):
-        pass
+        indexing_ptr, unit_len = self.get_indexing_ptr_and_unit_len(node, env, bo)
 
-    def get_unit_len_of_indexing(self, node: ast.IndexingNode, env: en.Environment):
+        result_ptr = self.memory.allocate(unit_len)
+        bo.push_stack(unit_len)
+        bo.unpack_addr(result_ptr, indexing_ptr, unit_len)
+        return result_ptr
+
+    def get_indexing_ptr_and_unit_len(self, node: ast.IndexingNode, env: en.Environment, bo: ByteOutput):
+        if isinstance(node.call_obj, ast.IndexingNode):
+            raise lib.CompileTimeException("High dimensional indexing not supported")
+        obj_tal = get_tal_of_evaluated_node(node.call_obj, env)
+        unit_len = obj_tal.unit_len(self.memory)
+        index_ptr = self.compile(node.arg.lines[0], env, bo)
+        unit_len_ptr = self.memory.allocate(INT_LEN)
+        bo.push_stack(INT_LEN)
+        bo.assign_i(unit_len_ptr, unit_len)
+        indexing_ptr = self.memory.allocate(INT_LEN)
+        bo.push_stack(INT_LEN)
+        bo.add_binary_op_int(MUL_I, indexing_ptr, index_ptr, unit_len_ptr)
+        array_ptr = self.compile(node.call_obj, env, bo)
+        bo.add_binary_op_int(ADD_I, indexing_ptr, array_ptr, indexing_ptr)
+
+        return indexing_ptr, unit_len
+
+    def get_unit_len_of_indexing(self, node: ast.IndexingNode, env: en.Environment) -> tuple:
         call_obj_tal = get_tal_of_node_self(node.call_obj, env)
         if en.is_array(call_obj_tal):
             depth = index_node_depth(node)
             if depth > len(call_obj_tal.array_lengths):
                 raise lib.CompileTimeException("Indexing depth greater than array dimension")
-
+            unit_len = call_obj_tal.total_len(self.memory)
+            for i in range(depth):
+                unit_len //= call_obj_tal.array_lengths[i]
+            print(unit_len)
         elif call_obj_tal.type_name[0] == "*":
-            pass
+            return (PTR_LEN,)
         else:
             raise lib.TypeException("Type '{}' not supporting indexing".format(en.type_to_readable(call_obj_tal)))
 
@@ -400,7 +436,6 @@ class Compiler:
             total_len = tal.total_len(self.memory)
 
             arg_ptr = self.compile(arg_node, env, bo)
-            # print("arg_ptr", arg_node, arg_ptr, total_len)
             tup = arg_ptr, total_len
             args.append(tup)
 
@@ -447,16 +482,15 @@ class Compiler:
     def compile_unary_op(self, node: ast.UnaryOperator, env: en.Environment, bo: ByteOutput):
         if node.operation == "pack":
             num_ptr = self.compile(node.value, env, bo)
-            return num_ptr
-            # ptr_ptr = self.memory.allocate(PTR_LEN)  # must be ptr
-            # bo.push_stack(PTR_LEN)
-            # bo.assign_i(ptr_ptr, num_ptr)
-            # return ptr_ptr
+            ptr_ptr = self.memory.allocate(PTR_LEN)
+            bo.push_stack(PTR_LEN)
+            bo.assign_i(ptr_ptr, num_ptr)
+            return ptr_ptr
         elif node.operation == "unpack":
             orig_tal = get_tal_of_evaluated_node(node, env)
             total_len = orig_tal.total_len(self.memory)
             ptr_ptr = self.compile(node.value, env, bo)
-            # print(ptr_ptr)
+            # print(unit_len)
             num_ptr = self.memory.allocate(total_len)
             # print(num_ptr)
             bo.push_stack(total_len)

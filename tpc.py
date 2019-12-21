@@ -1,8 +1,8 @@
 import sys
-import bin.spl_ast as ast
 import bin.tpl_compiler as cmp
 import bin.spl_parser as psr
 import bin.spl_lexer as lex
+import bin.tpl_preprocessor as pre
 import script
 
 
@@ -20,6 +20,9 @@ if __name__ == '__main__':
 
         parser = psr.Parser(tokens)
         root = parser.parse()
+
+        preprocessor = pre.Preprocessor()
+        preprocessor.preprocess(root)
 
         print(root)
         print("========== End of AST ==========")

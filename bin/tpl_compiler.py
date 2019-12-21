@@ -204,6 +204,7 @@ class Compiler:
 
         self.node_table = {
             ast.LITERAL: self.compile_literal,
+            ast.STRING_LITERAL: self.compile_string_literal,
             ast.DEF_STMT: self.compile_def_stmt,
             ast.NAME_NODE: self.compile_name_node,
             ast.BLOCK_STMT: self.compile_block_stmt,
@@ -258,6 +259,12 @@ class Compiler:
 
     def compile_literal(self, node: ast.Literal, env: en.Environment, bo: ByteOutput):
         return self.memory.calculate_lit_ptr(node.lit_pos)
+
+    def compile_string_literal(self, node: ast.StringLiteralNode, env: en.Environment, bo: ByteOutput):
+        print(self.literal_bytes)
+        print(node.literal)
+        print(node.byte_length)
+
 
     def compile_def_stmt(self, node: ast.DefStmt, env: en.Environment, bo: ByteOutput):
         r_tal = get_tal_of_defining_node(node.r_type, env, self.memory)
@@ -387,41 +394,6 @@ class Compiler:
         bo.add_binary_op_int(ADD_I, indexing_ptr, array_ptr, indexing_ptr)
 
         return indexing_ptr, unit_len
-
-    def get_unit_len_of_indexing(self, node: ast.IndexingNode, env: en.Environment) -> tuple:
-        call_obj_tal = get_tal_of_node_self(node.call_obj, env)
-        if en.is_array(call_obj_tal):
-            depth = index_node_depth(node)
-            if depth > len(call_obj_tal.array_lengths):
-                raise lib.CompileTimeException("Indexing depth greater than array dimension")
-            unit_len = call_obj_tal.total_len(self.memory)
-            for i in range(depth):
-                unit_len //= call_obj_tal.array_lengths[i]
-            print(unit_len)
-        elif call_obj_tal.type_name[0] == "*":
-            return (PTR_LEN,)
-        else:
-            raise lib.TypeException("Type '{}' not supporting indexing".format(en.type_to_readable(call_obj_tal)))
-
-    # def get_indexing_location_and_unit_len(self, node: ast.IndexingNode, env: en.Environment) -> (int, int):
-    #     l_ptr = evaluate(node.call_obj, env)
-    #     l_tal = get_tal_of_node_self(node, env)
-    #     if en.is_array(l_tal):
-    #         depth = index_node_depth(node)
-    #         unit_length = l_tal.total_len()
-    #         for i in range(depth):
-    #             unit_length //= l_tal.array_lengths[i]
-    #     elif l_tal.type_name[0] == "*":
-    #         ptr_b = mem.MEMORY.get(l_ptr, PTR_LEN)
-    #         l_ptr = typ.bytes_to_int(ptr_b)
-    #         unit_length = mem.MEMORY.get_type_size(l_tal.type_name[1:])
-    #     else:
-    #         raise lib.TypeException("Type '{}' not supporting indexing".format(en.type_to_readable(l_tal)))
-    #
-    #     arg_ptr = evaluate(node.arg, env)  # arg type must be int
-    #     arg_b = mem.MEMORY.get(arg_ptr, mem.MEMORY.get_type_size("int"))
-    #     arg_v = typ.bytes_to_int(arg_b)
-    #     return l_ptr + arg_v * unit_length, unit_length
 
     def compile_call(self, node: ast.FuncCall, env: en.Environment, bo: ByteOutput):
         assert node.call_obj.node_type == ast.NAME_NODE

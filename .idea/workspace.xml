@@ -9,12 +9,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aae2efb2-7778-4cc3-ae20-bcb51cee43a1" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/tpl_compiler.py" beforeDir="false" afterPath="$PROJECT_DIR$/bin/tpl_compiler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tp/cmp.tp" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tp/cmp.tpc" beforeDir="false" afterPath="$PROJECT_DIR$/tp/cmp.tpc" afterDir="false" />
-    </list>
+    <list default="true" id="aae2efb2-7778-4cc3-ae20-bcb51cee43a1" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

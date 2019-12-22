@@ -26,6 +26,8 @@ MOD_I = 15
 EQ_I = 16  # EQ       RES PTR   LEFT_P   RIGHT_P   | set RES PTR to 0 if LEFT_P == RIGHT_P
 GT_I = 17  # GT
 LT_I = 18
+AND = 19
+OR = 20
 IF_ZERO_GOTO = 30
 # IF_ZERO   GOTO      VALUE_P            | if VALUE P is 0 then goto
 CALL_NAT = 31
@@ -47,6 +49,17 @@ BOOL_RESULT_TABLE_INT = {
     ">": GT_I,
     "==": EQ_I,
     "<": LT_I
+}
+
+EXTENDED_BOOL_RESULT_TABLE_INT = {
+    **BOOL_RESULT_TABLE_INT,
+    ">=": (GT_I, EQ_I),
+    "<=": (LT_I, EQ_I)
+}
+
+BOOL_RESULT_TABLE_BOOL = {
+    "&&": AND,
+    "||": OR
 }
 
 
@@ -97,10 +110,13 @@ class ByteOutput:
         self.write_int(src)
 
     def add_binary_op_int(self, op: int, res: int, left: int, right: int):
-        self.codes.append(op)
+        self.write_one(op)
         self.write_int(res)
         self.write_int(left)
         self.write_int(right)
+
+    # def add_binary_op_bool(self, op: int, res: int, left: int, right: int):
+    #     self.write_one(op)
 
     def add_return(self, src, total_len):
         self.codes.append(RETURN)
@@ -509,14 +525,38 @@ class Compiler:
                 op_code = INT_RESULT_TABLE_INT[node.operation]
                 bo.add_binary_op_int(op_code, res_pos, lp, rp)
                 return res_pos
-            elif node.operation in BOOL_RESULT_TABLE_INT:
+            elif node.operation in EXTENDED_BOOL_RESULT_TABLE_INT:
                 res_pos = self.memory.allocate(BOOLEAN_LEN)
                 bo.push_stack(BOOLEAN_LEN)
-                op_code = BOOL_RESULT_TABLE_INT[node.operation]
+                if node.operation in BOOL_RESULT_TABLE_INT:
+                    op_code = BOOL_RESULT_TABLE_INT[node.operation]
+                    bo.add_binary_op_int(op_code, res_pos, lp, rp)
+                    return res_pos
+                else:
+                    op_tup = EXTENDED_BOOL_RESULT_TABLE_INT[node.operation]
+                    l_res = self.memory.allocate(BOOLEAN_LEN)
+                    bo.push_stack(INT_LEN)
+                    r_res = self.memory.allocate(BOOLEAN_LEN)
+                    bo.push_stack(INT_LEN)
+                    bo.add_binary_op_int(op_tup[0], l_res, lp, rp)
+                    bo.add_binary_op_int(op_tup[1], r_res, lp, rp)
+                    bo.add_binary_op_int(OR, res_pos, l_res, r_res)
+                    return res_pos
+
+        elif l_tal.type_name == "boolean":
+            if r_tal.type_name != "boolean":
+                raise lib.CompileTimeException("Must be boolean")
+            lp = self.compile_condition(node.left, env, bo)
+            rp = self.compile_condition(node.right, env, bo)
+
+            if node.operation in BOOL_RESULT_TABLE_BOOL:
+                res_pos = self.memory.allocate(BOOLEAN_LEN)
+                bo.push_stack(BOOLEAN_LEN)
+                op_code = BOOL_RESULT_TABLE_BOOL[node.operation]
                 bo.add_binary_op_int(op_code, res_pos, lp, rp)
                 return res_pos
 
-        raise lib.CompileTimeException("Unsupported binary operation")
+        raise lib.CompileTimeException("Unsupported binary operation '{}'".format(node.operation))
 
     def case_to_int(self, ptr, bo: ByteOutput):
         res_pos = self.memory.allocate(INT_LEN)
@@ -684,7 +724,7 @@ def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
             return tal
     elif node.node_type == ast.BINARY_OPERATOR:
         node: ast.BinaryOperator
-        if node.operation in BOOL_RESULT_TABLE_INT:
+        if node.operation in EXTENDED_BOOL_RESULT_TABLE_INT:
             return en.Type("boolean")
         return get_tal_of_evaluated_node(node.left, env)
     elif node.node_type == ast.FUNCTION_CALL:

@@ -7,8 +7,10 @@ fn main() int {
         i = i + 1;
     }
     var x: int = 127;
-    if true {
+    if x <= 126 {
         printf("This is true\n");
+    } else {
+        printf("This is not true\n");
     }
 
     return i;

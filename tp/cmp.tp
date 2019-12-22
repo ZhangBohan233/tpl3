@@ -1,7 +1,15 @@
 
-
 fn main() int {
-    var a: char[] = "asdf";
+    var j: int = 235;
+    var i: int = 0;
+    while i < 1000 {
+        //printf("%d\n", i);
+        i = i + 1;
+    }
+    var x: int = 127;
+    if true {
+        printf("This is true\n");
+    }
 
-    return 0;
+    return i;
 }

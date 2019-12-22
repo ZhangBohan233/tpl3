@@ -32,6 +32,8 @@ CALL_NAT = 31
 STORE_ADDR = 32
 UNPACK_ADDR = 33
 PTR_ASSIGN = 34  # | assign the addr stored in ptr with the value stored in right
+STORE_SP = 35
+RES_SP = 36
 
 INT_RESULT_TABLE_INT = {
     "+": ADD_I,
@@ -214,6 +216,8 @@ class Compiler:
             ast.RETURN_STMT: self.compile_return,
             ast.ASSIGNMENT_NODE: self.compile_assignment_node,
             ast.IF_STMT: self.compile_if,
+            ast.FOR_LOOP_STMT: self.compile_for_loop,
+            ast.WHILE_STMT: self.compile_while_loop,
             ast.UNDEFINED_NODE: self.compile_undefined,
             ast.INDEXING_NODE: self.compile_getitem
         }
@@ -223,6 +227,12 @@ class Compiler:
         env.define_function("clock", NativeFunction(en.Type("int"), p1))
         p2 = self.memory.define_func(typ.int_to_bytes(2))  # 2: malloc
         env.define_function("malloc", NativeFunction(en.Type("*void"), p2))
+        p3 = self.memory.define_func(typ.int_to_bytes(3))  # 3: printf
+        env.define_function("printf", NativeFunction(en.Type("void"), p3))
+        p4 = self.memory.define_func(typ.int_to_bytes(4))  # 3: mem_copy
+        env.define_function("mem_copy", NativeFunction(en.Type("void"), p4))
+        p5 = self.memory.define_func(typ.int_to_bytes(5))  # 3: free
+        env.define_function("free", NativeFunction(en.Type("void"), p5))
 
     def compile_all(self, root: ast.Node) -> bytes:
         bo = ByteOutput()
@@ -249,6 +259,8 @@ class Compiler:
         return bytes(lit_and_global)
 
     def compile(self, node: ast.Node, env: en.Environment, bo: ByteOutput):
+        if node is None:
+            return 0
         nt = node.node_type
         cmp_ftn = self.node_table[nt]
         return cmp_ftn(node, env, bo)
@@ -261,10 +273,10 @@ class Compiler:
         return self.memory.calculate_lit_ptr(node.lit_pos)
 
     def compile_string_literal(self, node: ast.StringLiteralNode, env: en.Environment, bo: ByteOutput):
-        print(self.literal_bytes)
-        print(node.literal)
-        print(node.byte_length)
-
+        # print(self.literal_bytes)
+        # print(node.literal)
+        # print(node.byte_length)
+        return self.compile(node.literal, env, bo)
 
     def compile_def_stmt(self, node: ast.DefStmt, env: en.Environment, bo: ByteOutput):
         r_tal = get_tal_of_defining_node(node.r_type, env, self.memory)
@@ -330,6 +342,11 @@ class Compiler:
                 tal = get_tal_of_defining_node(type_node.right, env, self.memory)
                 total_len = tal.total_len(self.memory)
 
+                if total_len == 0:  # pull the right
+                    tal = get_tal_of_evaluated_node(node.right, env)
+                    total_len = tal.total_len(self.memory)
+                    # print(total_len)
+
                 if en.is_pointer(tal):
                     assert total_len == PTR_LEN
                     ptr = self.memory.allocate(PTR_LEN)
@@ -344,6 +361,9 @@ class Compiler:
                     # print(total_len)
                     bo.push_stack(total_len)
                     bo.assign_i(ptr, arr_ptr)
+
+                    if r != 0:
+                        bo.assign(arr_ptr, r, total_len)
                     # print(ptr)
                 else:
                     ptr = self.memory.allocate(total_len)
@@ -392,6 +412,8 @@ class Compiler:
         bo.add_binary_op_int(MUL_I, indexing_ptr, index_ptr, unit_len_ptr)
         array_ptr = self.compile(node.call_obj, env, bo)
         bo.add_binary_op_int(ADD_I, indexing_ptr, array_ptr, indexing_ptr)
+
+        # print(unit_len)
 
         return indexing_ptr, unit_len
 
@@ -510,7 +532,7 @@ class Compiler:
 
     def compile_if(self, node: ast.IfStmt, env: en.Environment, bo: ByteOutput):
         # print(node.condition.lines[0])
-        cond_ptr = self.compile(node.condition.lines[0], env, bo)
+        cond_ptr = self.compile_condition(node.condition.lines[0], env, bo)
         # print(cond_ptr)
         if_bo = ByteOutput()
         else_bo = ByteOutput()
@@ -531,6 +553,42 @@ class Compiler:
         bo.codes.extend(if_bo.codes)
         bo.codes.extend(else_bo.codes)
         # bo.add_if_zero_goto(, cond_ptr)
+
+    def compile_for_loop(self, node: ast.ForLoopStmt, env: en.Environment, bo: ByteOutput):
+        pass
+
+    def compile_while_loop(self, node: ast.WhileStmt, env: en.Environment, bo: ByteOutput):
+        init_len = len(bo)
+        bo.write_one(STORE_SP)
+        cond_ptr = self.compile_condition(node.condition.lines[0], env, bo)
+
+        body_bo = ByteOutput()
+
+        title_env = en.LoopEnvironment(env)
+        body_env = en.BlockEnvironment(title_env)
+
+        self.compile(node.body, body_env, body_bo)
+        body_bo.write_one(RES_SP)
+        body_len = len(body_bo) + INT_LEN + 1
+
+        bo.write_one(IF_ZERO_GOTO)
+        bo.write_int(body_len)
+        bo.write_int(cond_ptr)
+
+        cond_len = len(bo) - init_len
+        body_bo.write_one(GOTO)
+        body_bo.write_int(-body_len - cond_len)
+
+        bo.codes.extend(body_bo.codes)
+        # print(len(bo) - body_len - cond_len, init_len)
+        bo.write_one(RES_SP)
+
+    def compile_condition(self, node: ast.Expr, env: en.Environment, bo: ByteOutput):
+        tal = get_tal_of_evaluated_node(node, env)
+        if tal.type_name != "boolean":
+            raise lib.CompileTimeException("Conditional statement can only have boolean output. Got '{}'."
+                                           .format(tal.type_name))
+        return self.compile(node, env, bo)
 
     def compile_undefined(self, node: ast.UndefinedNode, env: en.Environment, bo: ByteOutput):
         return 0
@@ -626,6 +684,8 @@ def get_tal_of_evaluated_node(node: ast.Node, env: en.Environment) -> en.Type:
             return tal
     elif node.node_type == ast.BINARY_OPERATOR:
         node: ast.BinaryOperator
+        if node.operation in BOOL_RESULT_TABLE_INT:
+            return en.Type("boolean")
         return get_tal_of_evaluated_node(node.left, env)
     elif node.node_type == ast.FUNCTION_CALL:
         node: ast.FuncCall

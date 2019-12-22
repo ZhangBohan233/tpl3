@@ -1,3 +1,9 @@
+#### Build 1004 ####
+=== C vm ===
+
+30 fib: 800 ms
+1m while loop: 200 ms
+
 #### Build 1003 ####
 
 20 fib: 1140 ms

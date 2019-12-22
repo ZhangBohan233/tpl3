@@ -393,6 +393,7 @@ class Parser:
             b = typ.string_to_bytes(lit)
             if make_string:
                 lit_type = 3
+                b += bytes(1)  # add the string terminator
             else:
                 if len(b) != 1:
                     raise stl.ParseException("Only ascii characters can be char")

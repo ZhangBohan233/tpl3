@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     t1 = time.time()
 
-    fib(30)
+    print(fib(30))
 
     t2 = time.time()
 
